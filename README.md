@@ -61,7 +61,20 @@ Furthermore, the different files in the data set contain different data fields. 
 For reference of column "Possible Origins", see the folder structure image in this section. The marked (bold) origins show the preferred file for accessing this information later on in the ETL process. A file is **preferred** when it is the only file where this data field is available or when it is already structured convenient (JSON, XML) for extraction. The table concludes this step of the project.
 
 ## Step 2: Data Vault Model
-The Data Vault Model was created by considering the data set and with the goal to not loose any data.
+The Data Vault Model is a modern database modeling method and is created with the results of the analysis and data understanding from Step 1.
+
+As a first step the Object Types (cf. Entities) of the data set are considered. The review of the data set shows following Object Types:
+* Thesis
+* Thesis Detail
+* Person
+* Degree programm
+* Institution
+* Departement
+* Course
+* Thesis Meta Information (?)
+
+With these Object Types the Data Vault Model (2.0) can be created.
+
 The following picture shows the Data Vault Model:
 
 <<dummy.png>>
