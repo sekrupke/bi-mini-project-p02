@@ -38,24 +38,23 @@ The following fields are treated as equivalent based on the Python script:
 * "Created"
 
 The table show the data fields in the data set, the left side shows the fields of the thesis topic list, the right side of the thesis topic details:
-| Thesis Topic List Fields        | Thesis Topic Detail Fields |
-| -------------------- | ------------- |
-| Title                | Title          |
-| Type of thesis       | Type of thesis           |
-| Degree programmes    |           |
-| Type of work         | Type of work          |
-| Contact person       | Author          |
-| Status               | Status          |
-| Created              | Created          |
-|                      | Description          |
-|                      | Home institution          |
-|                      | Problem statement          |
-|                      | Requirement          |
-|                      | Study data:         |
-|                      | -- Departements          |
-|                      | -- Degree programmes          |
-|                      | -- Assigned courses           |
-|                      | -- Contact person          |
+
+| Thesis Topic List Fields | Thesis Topic Detail Fields    |
+|--------------------------|-------------------------------|
+| Title                    | Title                         |
+| Type of thesis           | Type of thesis                |
+| Degree programmes        | Study data: Degree programmes |
+| Type of work             | Type of work                  |
+| Contact person           | Author                        |
+| Status                   | Status                        |
+| Created                  | Created                       |
+|                          | Description                   |
+|                          | Home institution              |
+|                          | Problem statement             |
+|                          | Requirement                   |
+|                          | Study data: Departements      |
+|                          | Study data: Assigned courses  |
+|                          | Study data: Contact person    |
 
 ## Step 2: Data Vault Model
 The Data Vault Model was created by considering the data set and with the goal to not loose any data.
