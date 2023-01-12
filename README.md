@@ -7,13 +7,13 @@ This is a BI Mini Project that was developed at the University of Oldenburg. The
 Following requirements are needed for the project:
 * Unix System Environment
 * Python installed
-* Docker and Docker Compose installed
+* Docker and Docker Compose installed (for later PostgreSQL and Metabase installation)
 
 ## Milestones of the project
 The project consists of 4 major Milestones which are described in detail in this document.
 * Step 1: Review of the Data Set
 * Step 2: Data Vault Model
-* Step 3: Database Schema
+* Step 3: Database Schema and Database
 * Step 4: ETL-Process
 * Step 5: Visualization and KPIs (Project Tasks)
 
@@ -87,9 +87,25 @@ The following decisions or assumptions were made while creating the Data Vault M
 
 Based on the Data Vault Model the next step is the creation of the Database Schema.
 
-## Step 3: Database Schema
-The Database Schema is derived from the Data Vault Model in Step 2. It already contains the needed data types as well as the relations between Hubs, Links and Satelites (the tables). So there is already logical information about the data.
+## Step 3: Database Schema and Database
+The next step is to define the Database Schema and to install and configure the PostgreSQL Database.
 
-The Database Schema is created via the Data Definition Language SQL. As this project should use a PostgresSQL as DBMS, the SQL Postgres Dialect is used.
+First, the Database Schema is derived from the Data Vault Model in Step 2. It already contains the needed data types as well as the relations between Hubs, Links and Satelites (the tables). So there is already logical information about the data. 
+The Database Schema is created via the Data Definition Language SQL. As this project uses PostgreSQL as DBMS, the SQL Dialect for PostgreSQL must be considered. The resulting SQL script for the creation of the schema is placed under *database/schema*. As a first step, only the Primary Keys (PK) were added as constraints.
 
-Resulting SQL scripts for the schema creation are placed under *database/schema*.
+Next, the PostgreSQL Database must be installed on the local machine by downloading the executables/binaries etc. The database will be the target for the ETL-Process.
+
+`Note: Later on, Docker and Docker Compose will be used. For now, a local PostgreSQL Server is used with default configuration.`
+
+## Step 4: ETL-Process
+After understanding the data and setting up the database with the database schema the ETL-Process can be started.
+The dataset contains about 2.2GB of raw data that is assumed to contain a lot of duplicated data due to the daily export of the thesis topic list and thesis topic details. The data fields for single thesis do not change so frequently. Several files contain the same data fields (see Table in Step 1) and the HTML files contain a lot of HTML-Elements etc. that are not relevant for the project (e.g. Stud.IP menu bar).
+
+To extract and transform the data from the original data set into a "consolidated" data set a Python script is used. The script does the following steps:
+* Iterate over all daily export folders
+    * Extract all relevant data fields from the files into memory
+    * Transform the data fields as needed
+    * Based on the data (new thesis, changed thesis, deleted thesis) add it to the memory
+* Write the memory into a result file for later loading into the database
+
+For further information see the commented source code under *etl/consolidate.py*.
