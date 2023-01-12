@@ -73,8 +73,14 @@ As a first step the Object Types (cf. Entities) of the data set are considered. 
 
 With these Object Types the Data Vault Model (2.0) can be created.
 
-The following picture shows the Data Vault Model:
-
+The following image shows the Data Vault Model:
 ![Data Vault Model](model/data_vault.png)
 
-The following decisions or assumptions were made while creating the model:
+The following decisions or assumptions were made while creating the model (based on the tutorial source: https://www.vertabelo.com/blog/data-vault-series-data-vault-2-0-modeling-basics/):
+* The Hub Thesis and Hub Details represent the views from the Stud.IP Thesis Topic List and Thesis Topic Detail.
+* A Person is represented by a Hub that is linked to the Hub Thesis (for contact persons) and to the Hub Detail (for author). This is because often the Author ist one of the contact persons.
+* The Hub Person uses a PERSON_ID as a business key because there may be persons with exactly the same name.
+* The title of a thesis (see Hub Thesis) is assumed to be unique.
+* As there is no business key for the Hub Details, the same value as in the TOPIC_ID is used (it is the ID of the thesis).
+* Some Hubs missing Satelites because no additional descriptive columns are in the dataset. This may change in the future so it is possible to add new Satelites later on.
+* The inclusion of the business keys of parent Hubs in the Link is not yet used (Data Vault 2.0 feature).
