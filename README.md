@@ -63,15 +63,13 @@ For reference of column "Possible Origins", see the folder structure image in th
 ## Step 2: Data Vault Model
 The Data Vault Model is a modern database modeling method and is created with the results of the analysis and data understanding from Step 1.
 
-As a first step the Object Types (cf. Entities) of the data set are considered. The review of the data set shows following Object Types:
+As a first step the Object Types (cf. Entities) of the data set are considered. The review lead to following Object Types:
 * Thesis
-* Thesis Detail
+* Detail
 * Person
 * Degree programm
-* Institution
 * Departement
 * Course
-* Thesis Meta Information (?)
 
 With these Object Types the Data Vault Model (2.0) can be created.
 
