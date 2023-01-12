@@ -75,6 +75,6 @@ With these Object Types the Data Vault Model (2.0) can be created.
 
 The following picture shows the Data Vault Model:
 
-<<dummy.png>>
+![Data Vault Model](model/data_vault.png)
 
 The following decisions or assumptions were made while creating the model:
