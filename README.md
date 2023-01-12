@@ -63,7 +63,7 @@ For reference of column "Possible Origins", see the folder structure image in th
 ## Step 2: Data Vault Model
 The Data Vault Model is a modern database modeling method and is created with the results of the analysis and data understanding from Step 1.
 
-As a first step the Object Types (cf. Entities) of the data set are considered. The review lead to following Object Types:
+As a first step the Object Types of the data set are considered. The review lead to following Object Types (Conceptual Data Model):
 * Thesis
 * Detail
 * Person
@@ -84,3 +84,12 @@ The following decisions or assumptions were made while creating the Data Vault M
 * As there is no business key for the Hub Details, the same value as in the TOPIC_ID is used (it is the ID of the thesis).
 * Some Hubs missing Satelites because no additional descriptive columns are in the dataset. This may change in the future so it is possible to add new Satelites later on.
 * The inclusion of the business keys of parent Hubs in the Link is not yet used (Data Vault 2.0 feature).
+
+Based on the Data Vault Model the next step is the creation of the Database Schema.
+
+## Step 3: Database Schema
+The Database Schema is derived from the Data Vault Model in Step 2. It already contains the needed data types as well as the relations between Hubs, Links and Satelites (the tables). So there is already logical information about the data.
+
+The Database Schema is created via the Data Definition Language SQL. As this project should use a PostgresSQL as DBMS, the SQL Postgres Dialect is used.
+
+Resulting SQL scripts for the schema creation are placed under *database/schema*.
