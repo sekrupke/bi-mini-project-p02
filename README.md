@@ -13,7 +13,7 @@ The project consists of 4 major Milestones which are described in detail in this
 
 ## Step 1: Review of the Data Set
 The dataset includes daily HTML-Export of all thesis topics with additional data (thesis topic details). There is also a CSV and JSON Representation of the thesis topics and thesis topic details in the dataset.
-As the data is exported from the Stud.IP-Thesis Plugin which implements a pagination, there are multiple HTML-Export per day. Also every detail page (when following the link on the thesis list) is present in the data set via a single HTML-Export.
+As the data is exported from the Stud.IP-Thesis Plugin which implements a pagination, there are multiple HTML-Exports per day. Also every detail page (when following the link on the thesis list) is present in the data set via a single HTML-Export.
 
 The image describes the structure of the data set (number of files in /additional reduced for image):
 ![Thesis topics data description](presentation/thesis_topics_data.png)
@@ -52,7 +52,8 @@ Furthermore, the different files in the data set contain different data fields. 
 |                          | topic_id                      | **db-topics.json+csv**, db-topics-additional.json+csv |
 |                          | url_topic_details             | **db-topics.json+csv**                                |
 
-For reference of column "Possible Origins", see the folder structure image in this section. The marked (bold) origins show the preferred file for accessing this information later on in the ETL process. A file is **preferred** when it is the only file where this data field is available or when it is already structured convenient (JSON, XML) for extraction. The table concludes this step of the project.
+For reference of column "Possible Origins", see the folder structure image in this section. The marked (bold) origins show the preferred file for accessing this information later on in the ETL process. A file is **preferred** when it is the only file where this data field is available or when it is already structured convenient (JSON, XML) for extraction. As the "Study Data: Departement" and "Study data: Assigned courses" data fields are only present in the Detail HTML-Export, the HTML must be parsed/transformed when extracting the data.
+The table concludes this step of the project.
 
 ## Step 2: Data Vault Model
 The Data Vault Model is a modern database modeling method and is created with the results of the analysis and data understanding from Step 1.
