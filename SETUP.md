@@ -14,14 +14,17 @@ The data set must be downloaded from https://cloudstorage.elearning.uni-oldenbur
 set can be unzipped and the folder "data-uol-thesis-topics" must be placed in the **root folder** of this project. This is 
 the folder directly containing the daily thesis exports.
 
-`Note: The files (names) and structure of the data set must not change or it will break the import.`
+`Note: The files (names) and structure of the data set must not change.`
 
 While reviewing the data set cleaning or removal of wrong data/ duplicated data may be necessary.
 In the thesis data set are 3 duplicated folders (20210719_****). They seem to have the same content and are the oldest
 exports, maybe they were used for test purposes of the export. 
 Removing two of the three duplicated folders:\
-`rm -r data-uol-thesis-topics/20210719_2cb1/`
+`rm -r data-uol-thesis-topics/20210719_2cb1/`\
 `rm -r data-uol-thesis-topics/20210719_4196/`
+
+Another issue in the dataset can be missing files, as in the export from 20220908. In the folder `data-uol-thesis-topics/20220908_2b64/` several files (like db-topics.csv) are missing. Therefore, we delete the export from that day:\
+`rm -r data-uol-thesis-topics/20220908_2b64/`
 
 ## Installing PostgresSQL
 The PostgreSQL Database must be installed on the local machine by downloading the executables/binaries that fit to the
