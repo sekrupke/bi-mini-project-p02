@@ -103,6 +103,9 @@ necessary cleaning is described in the SETUP.md (Preparing the Data Set).
 To extract and transform the data from the original data set into a "consolidated" data set a Python script is used. The script does the following steps:
 * Iterate over all daily export folders
     * Extract all relevant data fields from the files into memory
+      * Extract data fields from db-topics.csv
+      * Extract data fields from db-topics-additional.csv
+      * Extract data fields from Thesis Details HTML-Export (HTML-Parsing)
     * Transform the data fields as needed
     * Based on the data (new thesis, changed thesis, deleted thesis) add it to the memory
 * Write the memory into a result file for later loading into the database
