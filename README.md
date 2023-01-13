@@ -3,12 +3,6 @@
 ## Introduction
 This is a BI Mini Project that was developed at the University of Oldenburg. The project is based on a dataset of thesis topics offered at the university.
 
-## Requirements/ Prerequisites
-Following requirements are needed for the project:
-* Unix System Environment
-* Python installed
-* Docker and Docker Compose installed (for later PostgreSQL and Metabase installation)
-
 ## Milestones of the project
 The project consists of 4 major Milestones which are described in detail in this document.
 * Step 1: Review of the Data Set
@@ -95,11 +89,15 @@ The Database Schema is created via the Data Definition Language SQL. As this pro
 
 Next, the PostgreSQL Database must be installed on the local machine by downloading the executables/binaries etc. The database will be the target for the ETL-Process.
 
-`Note: Later on, Docker and Docker Compose will be used. For now, a local PostgreSQL Server is used with default configuration.`
+`Note: Later on, Docker and Docker Compose will be used. For now, a local PostgreSQL Server is used with default configuration.
+For now the setup of the database is described in the SETUP.md file.`
 
 ## Step 4: ETL-Process
 After understanding the data and setting up the database with the database schema the ETL-Process can be started.
 The dataset contains about 2.2GB of raw data that is assumed to contain a lot of duplicated data due to the daily export of the thesis topic list and thesis topic details. The data fields for single thesis do not change so frequently. Several files contain the same data fields (see Table in Step 1) and the HTML files contain a lot of HTML-Elements etc. that are not relevant for the project (e.g. Stud.IP menu bar).
+
+Before starting the ETL-Process, cleanup of the data set/ data set structure may be reasonable. Further information and 
+necessary cleaning is described in the SETUP.md (Preparing the Data Set).
 
 To extract and transform the data from the original data set into a "consolidated" data set a Python script is used. The script does the following steps:
 * Iterate over all daily export folders
@@ -109,3 +107,5 @@ To extract and transform the data from the original data set into a "consolidate
 * Write the memory into a result file for later loading into the database
 
 For further information see the commented source code under *etl/consolidate.py*.
+
+In order to execute the Python script the development environment must be configured. Further information is in the SETUP.md (Creating Python Environment).

@@ -1,4 +1,12 @@
+import os
+from pathlib import Path
 import pandas as pd
 
-df = pd.DataFrame([[1,2]], columns = ['A', 'B'])
-print(df)
+path = "../uol_thesis_topics"
+
+for filename in os.listdir(path):
+    print(filename)
+
+print('Starting the import and consolidation of the data set.')
+
+print('Iterating over day folder {0}'.format())
