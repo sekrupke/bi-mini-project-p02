@@ -4,7 +4,7 @@
 This is a BI Mini Project that was developed at the University of Oldenburg. The project is based on a dataset of thesis topics offered at the university.
 
 ## Milestones of the project
-The project consists of 4 major Milestones which are described in detail in this document.
+The project consists of 5 major Milestones which are described in detail in this document.
 * Step 1: Review of the Data Set
 * Step 2: Data Vault Model
 * Step 3: Database Schema and Database

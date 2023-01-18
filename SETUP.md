@@ -35,7 +35,8 @@ After installation the Database must be configured:
 - Execute the SQL-Script "create.sql" in the folder database/schema/.
 
 ## Creating Python Environment
-For development a virtual Python environment is recommended to track and install the requirements.
+For development a virtual Python environment is recommended to track and install the requirements. This step is only 
+required once when no virtual environment is present.
 
 Move to the etl folder:\
 `cd etl`

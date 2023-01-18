@@ -5,12 +5,57 @@ import sys
 import pandas as pd
 
 
-def extract_departements(html_content):
-    return "Very Large Business Applications"
+def extract_departements(html_table_rows):
+    extraction_succeeded = False
+
+    # Search every html table row for "Abteilungen"
+    for row in html_table_rows:
+        # Check if no departement is given in the row
+        found_no_departement = re.findall("<td><strong>Abteilungen</strong></td>.*(Keinen Abteilungen zugewiesen).*", row, re.DOTALL)
+        if found_no_departement:
+            print('Found empty departement list in HTML Rows: {}.'.format(found_no_departement))
+            extraction_succeeded = True
+            return None
+
+        # Check if departements are given in the row (search the list in the HTML)
+        found_department_list = re.findall("<td><strong>Abteilungen</strong></td>.*?(<li>.*?)</ul>", row, re.DOTALL)
+        if len(found_department_list) == 1:
+            found_departements = re.findall("<li>(.*?)</li>", found_department_list[0], re.DOTALL)
+            print('Found the departement(s) in HTML Rows: {}.'.format(found_departements))
+            extraction_succeeded = True
+            return found_departements
+
+    if not extraction_succeeded:
+        print('ERROR: Departement list not present in HTML Rows!')
+        return None
 
 
-def extract_assigned_courses(html_content):
-    return ["Master Informatik", "Fach-Bachelor Wirtschaftsinformatik", "Master Wirtschaftsinformatik"]
+def extract_assigned_courses(html_table_rows):
+    extraction_succeeded = False
+
+    # Search every html table row for "Zugeordnete Veranstaltungen"
+    for row in html_table_rows:
+        # Check if no assigned course is given in the row
+        found_no_courses = re.findall("<td><strong>Zugeordnete Veranstaltungen</strong></td>.*(Keine Veranstaltungen zugewiesen).*", row, re.DOTALL)
+        if found_no_courses:
+            print('Found empty departement list in HTML Rows: {}.'.format(found_no_courses))
+            extraction_succeeded = True
+            return None
+
+        # Check if assigned courses are given in the row (search the list in the HTML)
+        found_course_list = re.findall("<td><strong>Zugeordnete Veranstaltungen</strong></td>.*?(<li>.*?)</ul>", row, re.DOTALL)
+        if len(found_course_list) == 1:
+            found_courses = re.findall("<a.*?>\\s*(.*?)\\s*</a>", found_course_list[0], re.DOTALL)
+
+            # Replace special HTML entities (e.g. &quot;)
+            courses = [course.replace("&quot;", "\"") for course in found_courses]
+            print('Found the ({}) Assigned Courses(s) in HTML Rows: {}.'.format(len(courses), courses))
+            extraction_succeeded = True
+            return courses
+
+    if not extraction_succeeded:
+        print('ERROR: Assigned Courses list not present in HTML Rows!')
+        return None
 
 
 data_set_path = "../data-uol-thesis-topics"
@@ -70,7 +115,7 @@ for export_dir in export_dir_set:
                 print("14 <tr> tags expected in {}, found: {}".format(filename, len(tr_contents)))
 
             # <tr> tag 11 is Departements, <tr> tag 12 is Assigned Courses
-            departements = extract_departements(tr_contents[10])
-            assigned_courses = extract_assigned_courses(tr_contents[11])
+            departements = extract_departements(tr_contents)
+            assigned_courses = extract_assigned_courses(tr_contents)
 
     print("Found {} HTML Detail Exports in the folder {}".format(len(html_detail_filename_set), html_detail_path))
