@@ -47,8 +47,9 @@ def extract_assigned_courses(html_table_rows):
         if len(found_course_list) == 1:
             found_courses = re.findall("<a.*?>\\s*(.*?)\\s*</a>", found_course_list[0], re.DOTALL)
 
-            # Replace special HTML entities (e.g. &quot;)
+            # As last step replace special HTML entities (e.g. &quot; or &#039;)
             courses = [course.replace("&quot;", "\"") for course in found_courses]
+            courses = [course.replace("&#039;", "'") for course in found_courses]
             print('Found the ({}) Assigned Courses(s) in HTML Rows: {}.'.format(len(courses), courses))
             extraction_succeeded = True
             return courses

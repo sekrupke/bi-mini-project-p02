@@ -51,8 +51,8 @@ Download and installation of the Python Requirements:\
 `pip install -r requirements.txt`
 
 ## Execute the ETL process
-The process first extracts and transforms the consolidated data fields from the data set. After that the consolidated data
-is loaded into the database by SQL-Insert scripts.
+The process first extracts and transforms the consolidated data fields from the data set. After that the consolidated 
+data is loaded into the database by SQL-Insert scripts.
 
 Start the Python script for extract and transform steps (activated virtual environment):\
 `python3 consolidate.py`

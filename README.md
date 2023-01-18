@@ -105,11 +105,12 @@ To extract and transform the data from the original data set into a "consolidate
     * Extract all relevant data fields from the files into memory
       * Extract data fields from db-topics.csv
       * Extract data fields from db-topics-additional.csv
-      * Extract data fields from Thesis Details HTML-Export (HTML-Parsing)
+      * Extract data fields from Thesis Details HTML-Export (complex HTML-Parsing)
     * Transform the data fields as needed
     * Based on the data (new thesis, changed thesis, deleted thesis) add it to the memory
 * Write the memory into a result file for later loading into the database
 
-For further information see the commented source code under *etl/consolidate.py*.
+For further information see the commented source code under *etl/consolidate.py*. For the extraction of data from the 
+HTML-Export complex functions were needed.
 
 In order to execute the Python script the development environment must be configured. Further information is in the SETUP.md (Creating Python Environment).
