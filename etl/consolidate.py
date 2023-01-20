@@ -4,13 +4,15 @@ import sys
 from datetime import datetime
 
 import pandas as pd
+import sqlalchemy
 
 
 def extract_departements(html_table_rows):
     # Search every html table row for "Abteilungen"
     for row in html_table_rows:
         # Check if no departement is given in the row
-        found_no_departement = re.findall("<td><strong>Abteilungen</strong></td>.*(Keinen Abteilungen zugewiesen).*", row, re.DOTALL)
+        found_no_departement = re.findall("<td><strong>Abteilungen</strong></td>.*(Keinen Abteilungen zugewiesen).*",
+                                          row, re.DOTALL)
         if found_no_departement:
             # print('Found empty departement list in HTML Rows: {}.'.format(found_no_departement))
             return None
@@ -30,13 +32,16 @@ def extract_assigned_courses(html_table_rows):
     # Search every html table row for "Zugeordnete Veranstaltungen"
     for row in html_table_rows:
         # Check if no assigned course is given in the row
-        found_no_courses = re.findall("<td><strong>Zugeordnete Veranstaltungen</strong></td>.*(Keine Veranstaltungen zugewiesen).*", row, re.DOTALL)
+        found_no_courses = re.findall(
+            "<td><strong>Zugeordnete Veranstaltungen</strong></td>.*(Keine Veranstaltungen zugewiesen).*", row,
+            re.DOTALL)
         if found_no_courses:
             # print('Found empty assigned courses list in HTML Rows: {}.'.format(found_no_courses))
             return None
 
         # Check if assigned courses are given in the row (search the list in the HTML)
-        found_course_list = re.findall("<td><strong>Zugeordnete Veranstaltungen</strong></td>.*?(<li>.*?)</ul>", row, re.DOTALL)
+        found_course_list = re.findall("<td><strong>Zugeordnete Veranstaltungen</strong></td>.*?(<li>.*?)</ul>", row,
+                                       re.DOTALL)
         if len(found_course_list) == 1:
             found_courses = re.findall("<a.*?>\\s*(.*?)\\s*</a>", found_course_list[0], re.DOTALL)
 
@@ -72,6 +77,20 @@ def convert_german_date(date):
     # Converts the German date to English date (25.02.2012 -> 2012-02-25)
     created_date = datetime.strptime(str(date), '%d.%m.%Y')
     return datetime.strftime(created_date, '%Y-%m-%d')
+
+
+def get_db_engine():
+    db_connection_uri = 'postgresql://{user}:{password}@{server}/{database}'
+    db_connect_uri = db_connection_uri.format(user="postgres_user",
+                                              password="aB2Ck91mN0LeA",
+                                              server="localhost",
+                                              database="thesis")
+    db_engine = sqlalchemy.create_engine(db_connect_uri)
+    return db_engine
+
+
+def load_data_into_db(data):
+    engine = get_db_engine()
 
 
 data_set_path = "../data-uol-thesis-topics"
@@ -144,7 +163,8 @@ for export_dir in export_dir_set:
                 sys.exit()
 
             # Add the topic_id, Departements and Assigned Courses to the Dataframe
-            df = pd.DataFrame({"topic_id": [topic_id], "departements": [departements], "assigned_courses": [assigned_courses]})
+            df = pd.DataFrame(
+                {"topic_id": [topic_id], "departements": [departements], "assigned_courses": [assigned_courses]})
             html_details_df = pd.concat([html_details_df, df], ignore_index=True)
 
     # Consolidate the three data sources (db-topics, db-topics-additional, HTML-Export) from the export_dir
@@ -170,16 +190,17 @@ for export_dir in export_dir_set:
     merged_df = pd.merge(topic_detail_merged_df, html_details_df, how='inner', on='topic_id')
 
     # Check if the merge was successful
-    #topic_df.to_csv('topic_out.csv', index=False, encoding='utf-8', sep=';')
-    #topic_detail_df.to_csv('topic_detail_out.csv', index=False, encoding='utf-8', sep=';')
-    #html_details_df.to_csv('html_details_out.csv', index=False, encoding='utf-8', sep=';')
-    #merged_df.to_csv('merged_out.csv', index=False, encoding='utf-8', sep=';')
+    # topic_df.to_csv('topic_out.csv', index=False, encoding='utf-8', sep=';')
+    # topic_detail_df.to_csv('topic_detail_out.csv', index=False, encoding='utf-8', sep=';')
+    # html_details_df.to_csv('html_details_out.csv', index=False, encoding='utf-8', sep=';')
+    # merged_df.to_csv('merged_out.csv', index=False, encoding='utf-8', sep=';')
     print("Topics found: db-topics: {}, db-topics-additional: {}, HTML Detail Export: {} -> Merged: {}"
           .format(len(topic_df.index), len(topic_detail_df.index), len(html_details_df.index), len(merged_df.index)))
     if not (len(topic_df.index) == len(topic_detail_df.index) == len(html_details_df.index) == len(merged_df.index)):
         print("Error: Number of topics in consolidation Dataframes differ!")
         sys.exit()
 
-    #sys.exit()
+    # After merging insert the data into the database
+    load_data_into_db(merged_df)
 
 print("Import and consolidation of the data set finished.")
