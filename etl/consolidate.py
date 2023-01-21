@@ -81,7 +81,7 @@ def convert_german_date(date):
 
 def get_db_engine():
     db_connection_uri = 'postgresql://{user}:{password}@{server}/{database}'
-    db_connect_uri = db_connection_uri.format(user="postgres_user",
+    db_connect_uri = db_connection_uri.format(user="thesis_user",
                                               password="aB2Ck91mN0LeA",
                                               server="localhost",
                                               database="thesis")
@@ -193,7 +193,7 @@ for export_dir in export_dir_set:
     # topic_df.to_csv('topic_out.csv', index=False, encoding='utf-8', sep=';')
     # topic_detail_df.to_csv('topic_detail_out.csv', index=False, encoding='utf-8', sep=';')
     # html_details_df.to_csv('html_details_out.csv', index=False, encoding='utf-8', sep=';')
-    # merged_df.to_csv('merged_out.csv', index=False, encoding='utf-8', sep=';')
+    merged_df.to_csv('merged_out.csv', index=False, encoding='utf-8', sep=';')
     print("Topics found: db-topics: {}, db-topics-additional: {}, HTML Detail Export: {} -> Merged: {}"
           .format(len(topic_df.index), len(topic_detail_df.index), len(html_details_df.index), len(merged_df.index)))
     if not (len(topic_df.index) == len(topic_detail_df.index) == len(html_details_df.index) == len(merged_df.index)):
@@ -202,5 +202,7 @@ for export_dir in export_dir_set:
 
     # After merging insert the data into the database
     load_data_into_db(merged_df)
+
+    sys.exit()
 
 print("Import and consolidation of the data set finished.")

@@ -31,8 +31,22 @@ The PostgreSQL Database must be installed on the local machine by downloading th
 operating system. (TODO: Automatic Docker Script (Docker Compose)
 
 After installation the Database must be configured:
+- Create Database "thesis"
 - Basic User with Password for Database "thesis"
 - Execute the SQL-Script "create.sql" in the folder database/schema/.
+
+Start the database (TODO: Docker)
+`/usr/local/opt/postgresql/bin/postgres -D /usr/local/var/postgres`
+
+Create Database "thesis":\
+`CREATE DATABASE thesis;`
+
+Create user and grant privileges for Database "thesis":\
+`CREATE USER thesis_user WITH ENCRYPTED PASSWORD 'aB2Ck91mN0LeA';`\
+`GRANT ALL PRIVILEGES ON DATABASE thesis TO thesis_user;`
+
+Execute the SQL-Script "create.sql" in the folder database/schema/:\
+`Copy script into Database Console...`
 
 ## Creating Python Environment
 For development a virtual Python environment is recommended to track and install the requirements. This step is only 
