@@ -190,7 +190,7 @@ def load_data_into_db(thesis_df, load_date):
             hub_thesis_key = md5(thesis_title)
             hub_details_key = md5(thesis_id)
             insert_into_db("INSERT INTO lnk_thesis_details VALUES (%s, %s, %s, %s, %s);",
-                          (thesis_details_key, hub_thesis_key, hub_details_key, load_date, 'DigiDigger'))
+                           (thesis_details_key, hub_thesis_key, hub_details_key, load_date, 'DigiDigger'))
             lnk_thesis_details_cache.add(thesis_details_key)
 
         # Insert the degree programmes (hub_degree_programm)
@@ -207,7 +207,7 @@ def load_data_into_db(thesis_df, load_date):
                 hub_thesis_key = md5(thesis_title)
                 hub_degree_key = md5(thesis_programm)
                 insert_into_db("INSERT INTO lnk_thesis_degree_programm VALUES (%s, %s, %s, %s, %s);",
-                            (detail_course_key, hub_thesis_key, hub_degree_key, load_date, 'DigiDigger'))
+                               (detail_course_key, hub_thesis_key, hub_degree_key, load_date, 'DigiDigger'))
                 lnk_detail_course_cache.add(detail_course_key)
 
         # Insert the contact persons (hub_person)
@@ -217,7 +217,7 @@ def load_data_into_db(thesis_df, load_date):
             person_id = generate_person_id()
             if md5(thesis_contact) not in hub_contact_author_cache:
                 insert_into_db("INSERT INTO hub_person VALUES (%s, %s, %s, %s);",
-                    (md5(person_id), person_id, load_date, 'DigiDigger'))
+                               (md5(person_id), person_id, load_date, 'DigiDigger'))
                 hub_contact_author_cache.add(md5(person_id))
 
             # Insert the thesis contact link (lnk_thesis_contact)
@@ -248,13 +248,13 @@ def load_data_into_db(thesis_df, load_date):
             lnk_detail_author_cache.add(detail_author_key)
 
         # Insert the person satellite (sat_person)
-        thesis_author = str(thesis[4])
+        thesis_author = str(thesis[11])
         hash_diff = md5(thesis_author)
         if hash_diff not in sat_person_cache:
             insert_into_db("INSERT INTO sat_person VALUES (%s, %s, %s, %s, %s);",
                            (md5(thesis_author), load_date, hash_diff, 'DigiDigger', thesis_author))
             sat_person_cache.add(hash_diff)
-        thesis_contacts = str(thesis[11])
+        thesis_contacts = str(thesis[4].split('|'))
         for thesis_contact in thesis_contacts:
             hash_diff = md5(thesis_contact)
             if hash_diff not in sat_person_cache:
@@ -306,15 +306,18 @@ print('Starting the import and consolidation of the data set ({}).'.format(data_
 for dirname in os.listdir(data_set_path):
     export_dir_set.add(dirname)
 
+# Ensure sorted exported dir list and exclude hidden/ system folders
 export_dir_set = sorted(export_dir_set)
+export_dir_set[:] = [d for d in export_dir_set if not d.startswith('.')]
+
+# Variables for calculation of progress
+number_of_dirs = len(export_dir_set)
+number_of_finished_dirs = 0
 
 # Iterate over every export folder in the data set directory
 for export_dir in export_dir_set:
-    # Exclude hidden/ system folders
-    if export_dir.startswith('.'):
-        continue
 
-    print('Iterating over export folder: {}'.format(export_dir))
+    print('Processing export folder: {}'.format(export_dir))
     db_topics_path = "/".join([data_set_path, export_dir, db_topics_filename])
     db_topics_detail_path = "/".join([data_set_path, export_dir, db_topics_add_filename])
 
@@ -393,9 +396,7 @@ for export_dir in export_dir_set:
     # Merge the resulting Dataframe with the html_details_df
     merged_df = pd.merge(topic_detail_merged_df, html_details_df, how='inner', on='topic_id')
 
-    # Check if the merge was successful
-    print("Topics found: db-topics: {}, db-topics-additional: {}, HTML Detail Export: {} -> Merged: {}"
-          .format(len(topic_df.index), len(topic_detail_df.index), len(html_details_df.index), len(merged_df.index)))
+    # Check if the merge was successful by comparing length of all Dataframes
     if not (len(topic_df.index) == len(topic_detail_df.index) == len(html_details_df.index) == len(merged_df.index)):
         print("Error: Number of topics in consolidation Dataframes differ!")
         sys.exit()
@@ -414,12 +415,17 @@ for export_dir in export_dir_set:
                               'aufgabenstellung': 'problem_statement',
                               'voraussetzung': 'requirement'},
                      inplace=True, errors='raise')
-    merged_df.to_csv('merged_out.csv', index=False, encoding='utf-8', sep=';')
+
+    # Write merged Dataframe with thesis data to CSV file for testing purposes
+    merged_df.to_csv('merged_thesis_data.csv', mode='a', index=False, encoding='utf-8', sep=';')
 
     # After merging insert the data into the database with the load date (date of export dir)
     export_date = "{}-{}-{}".format(export_dir[:4], export_dir[4:6], export_dir[6:8])
     load_data_into_db(merged_df, export_date)
 
-    sys.exit()
+    # Calculate the ETL process progress
+    number_of_finished_dirs += 1
+    progress = round((number_of_finished_dirs / number_of_dirs) * 100, 2)
+    print('Finished! Progress: {}%'.format(progress))
 
 print("Import and consolidation of the data set finished.")
