@@ -7,12 +7,15 @@ import pandas as pd
 import psycopg2
 
 # Use sets for md5 hash values of already inserted entities in order to reduce unnecessary db calls
-title_cache = set()
-detail_cache = set()
-programm_cache = set()
-contact_author_cache = set()
-departement_cache = set()
-course_cache = set()
+hub_title_cache = set()
+hub_detail_cache = set()
+hub_programm_cache = set()
+hub_contact_author_cache = set()
+hub_departement_cache = set()
+hub_course_cache = set()
+sat_thesis_cache = set()
+sat_detail_cache = set()
+sat_person_cache = set()
 
 
 def extract_departements(html_table_rows):
@@ -94,7 +97,14 @@ def md5(business_key):
     return hashlib.md5(business_key.encode()).hexdigest()
 
 
-def insert_into_database(sql_commands):
+def md5(*columns):
+    # Hashes the descriptive column(s) with MD5
+    import hashlib
+    concat_columns = ''.join(value for value in columns)
+    return hashlib.md5(concat_columns.encode()).hexdigest()
+
+
+def insert_into_db(sql_commands):
     conn = None
     try:
         # Connect to the PostgreSQL database
@@ -119,60 +129,98 @@ def insert_into_database(sql_commands):
             conn.close()
 
 
-def load_data_into_db(thesis_df):
+def load_data_into_db(thesis_df, load_date):
     for thesis in thesis_df.itertuples(index=False):
+
         # Insert the thesis (hub_thesis)
         thesis_title = str(thesis[0])
-        if md5(thesis_title) not in title_cache:
-            insert_into_database("""INSERT INTO hub_thesis VALUES ('{}', '{}', '{}','{}');"""
-                                 .format(md5(thesis_title), thesis_title, datetime.now(), 'DigiDigger'))
-            title_cache.add(md5(thesis_title))
+        if md5(thesis_title) not in hub_title_cache:
+            insert_into_db("""INSERT INTO hub_thesis VALUES ('{}', '{}', '{}','{}');"""
+                           .format(md5(thesis_title), thesis_title, load_date, 'DigiDigger'))
+            hub_title_cache.add(md5(thesis_title))
+
+        # Insert the thesis satellite (sat_thesis)
+        thesis_type = str(thesis[1])
+        thesis_work_type = str(thesis[3])
+        thesis_status = str(thesis[5])
+        thesis_created = str(thesis[6])
+        thesis_id = str(thesis[6])
+        hash_diff = md5(thesis_type, thesis_work_type, thesis_status, thesis_created, thesis_id)
+        if hash_diff not in sat_thesis_cache:
+            insert_into_db("""INSERT INTO sat_thesis VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}');"""
+                           .format(md5(thesis_title), load_date, hash_diff, 'DigiDigger', thesis_type,
+                                   thesis_work_type, thesis_status, thesis_created, thesis_id))
+            sat_thesis_cache.add(hash_diff)
 
         # Insert the thesis detail (hub_detail)
         thesis_detail = str(thesis[7])
-        if md5(thesis_detail) not in detail_cache:
-            insert_into_database("""INSERT INTO hub_detail VALUES ('{}', '{}', '{}','{}');"""
-                                .format(md5(thesis_detail), thesis_detail, datetime.now(), 'DigiDigger'))
-            detail_cache.add(md5(thesis_detail))
+        if md5(thesis_detail) not in hub_detail_cache:
+            insert_into_db("""INSERT INTO hub_detail VALUES ('{}', '{}', '{}','{}');"""
+                           .format(md5(thesis_detail), thesis_detail, load_date, 'DigiDigger'))
+            hub_detail_cache.add(md5(thesis_detail))
+
+        # Insert the thesis detail satellite (sat_details)
+        thesis_description = str(thesis[9])
+        thesis_institution = str(thesis[10])
+        thesis_problem = str(thesis[12])
+        thesis_requirement = str(thesis[14])
+        thesis_url = str(thesis[8])
+        hash_diff = md5(thesis_description, thesis_institution, thesis_problem, thesis_requirement, thesis_url)
+        if hash_diff not in sat_detail_cache:
+            insert_into_db("""INSERT INTO sat_thesis VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}');"""
+                           .format(md5(thesis_detail), load_date, hash_diff, 'DigiDigger', thesis_description,
+                                   thesis_institution, thesis_problem, thesis_requirement, thesis_url))
+            sat_detail_cache.add(hash_diff)
 
         # Insert the degree programmes
         thesis_programmes = str(thesis[2]).split('|')
         for thesis_programm in thesis_programmes:
-            if md5(thesis_programm) not in programm_cache:
-                insert_into_database("""INSERT INTO hub_degree_programm VALUES ('{}', '{}', '{}','{}');"""
-                                    .format(md5(thesis_programm), thesis_programm, datetime.now(), 'DigiDigger'))
-                programm_cache.add(md5(thesis_programm))
+            if md5(thesis_programm) not in hub_programm_cache:
+                insert_into_db("""INSERT INTO hub_degree_programm VALUES ('{}', '{}', '{}','{}');"""
+                               .format(md5(thesis_programm), thesis_programm, load_date, 'DigiDigger'))
+                hub_programm_cache.add(md5(thesis_programm))
 
         # Insert the contact persons
         thesis_contacts = str(thesis[4]).split('|')
         for thesis_contact in thesis_contacts:
-            if md5(thesis_contact) not in contact_author_cache:
-                insert_into_database("""INSERT INTO hub_person (hub_person_key, hub_load_dts, hub_rec_src) 
-                                    VALUES ('{}', '{}','{}');""".format(md5(thesis_contact), datetime.now(), 'DigiDigger'))
-                contact_author_cache.add(md5(thesis_contact))
+            if md5(thesis_contact) not in hub_contact_author_cache:
+                # TODO: Actually the sequence is needed for calculating the PK
+                insert_into_db("""INSERT INTO hub_person (hub_person_key, hub_load_dts, hub_rec_src) 
+                                    VALUES ('{}', '{}','{}');""".format(md5(thesis_contact), load_date, 'DigiDigger'))
+                hub_contact_author_cache.add(md5(thesis_contact))
 
         # Insert the author
         thesis_author = str(thesis[11])
-        if md5(thesis_author) not in contact_author_cache:
-            insert_into_database("""INSERT INTO hub_person (hub_person_key, hub_load_dts, hub_rec_src)
-                                 VALUES ('{}', '{}','{}');""".format(md5(thesis_author), datetime.now(), 'DigiDigger'))
-            contact_author_cache.add(md5(thesis_author))
+        if md5(thesis_author) not in hub_contact_author_cache:
+            insert_into_db("""INSERT INTO hub_person (hub_person_key, hub_load_dts, hub_rec_src)
+                                 VALUES ('{}', '{}','{}');""".format(md5(thesis_author), load_date, 'DigiDigger'))
+            hub_contact_author_cache.add(md5(thesis_author))
+
+        # Insert the person satellite (sat_person)
+        thesis_author = str(thesis[4])
+        thesis_contacts = str(thesis[11])
+        hash_diff = md5()
+        if hash_diff not in sat_detail_cache:
+            insert_into_db("""INSERT INTO sat_thesis VALUES ('{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}');"""
+                           .format(md5(thesis_detail), load_date, hash_diff, 'DigiDigger', thesis_description,
+                                   thesis_institution, thesis_problem, thesis_requirement, thesis_url))
+            sat_detail_cache.add(hash_diff)
 
         # Insert the departements
         thesis_departements = str(thesis[14]).split('|')
         for thesis_departement in thesis_departements:
-            if md5(thesis_departement) not in departement_cache and thesis_departement != "None":
-                insert_into_database("""INSERT INTO hub_departement VALUES ('{}', '{}', '{}','{}');"""
-                                     .format(md5(thesis_departement), thesis_departement, datetime.now(), 'DigiDigger'))
-                departement_cache.add(md5(thesis_departement))
+            if md5(thesis_departement) not in hub_departement_cache and thesis_departement != "None":
+                insert_into_db("""INSERT INTO hub_departement VALUES ('{}', '{}', '{}','{}');"""
+                               .format(md5(thesis_departement), thesis_departement, load_date, 'DigiDigger'))
+                hub_departement_cache.add(md5(thesis_departement))
 
         # Insert the assigned courses
         thesis_courses = str(thesis[15]).split('|')
         for thesis_course in thesis_courses:
-            if md5(thesis_course) not in course_cache and thesis_course != "None":
-                insert_into_database("""INSERT INTO hub_course VALUES ('{}', '{}', '{}','{}');"""
-                                     .format(md5(thesis_course), thesis_course, datetime.now(), 'DigiDigger'))
-                course_cache.add(md5(thesis_course))
+            if md5(thesis_course) not in hub_course_cache and thesis_course != "None":
+                insert_into_db("""INSERT INTO hub_course VALUES ('{}', '{}', '{}','{}');"""
+                               .format(md5(thesis_course), thesis_course, load_date, 'DigiDigger'))
+                hub_course_cache.add(md5(thesis_course))
 
 
 data_set_path = "../data-uol-thesis-topics"
@@ -294,9 +342,10 @@ for export_dir in export_dir_set:
                      inplace=True, errors='raise')
     merged_df.to_csv('merged_out.csv', index=False, encoding='utf-8', sep=';')
 
-    # After merging insert the data into the database
-    load_data_into_db(merged_df)
+    # After merging insert the data into the database with the load date (date of export dir)
+    export_date = "{}-{}-{}".format(export_dir[:4], export_dir[4:6], export_dir[6:8])
+    load_data_into_db(merged_df, export_date)
 
-    #sys.exit()
+    sys.exit()
 
 print("Import and consolidation of the data set finished.")
