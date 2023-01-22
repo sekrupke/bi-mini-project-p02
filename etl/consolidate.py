@@ -6,7 +6,9 @@ from datetime import datetime
 import pandas as pd
 import psycopg2
 
-# Use sets for md5 hash values of already inserted entities in order to reduce unnecessary db calls
+from id_generator import PersonId
+
+# Use sets for md5 hash values of already inserted rows in hubs, satellites and links
 hub_title_cache = set()
 hub_detail_cache = set()
 hub_programm_cache = set()
@@ -16,6 +18,12 @@ hub_course_cache = set()
 sat_thesis_cache = set()
 sat_detail_cache = set()
 sat_person_cache = set()
+lnk_thesis_details_cache = set()
+lnk_thesis_degree_programm_cache = set()
+lnk_thesis_contact_cache = set()
+lnk_detail_author_cache = set()
+lnk_detail_departement_cache = set()
+lnk_detail_course_cache = set()
 
 
 def extract_departements(html_table_rows):
@@ -104,6 +112,10 @@ def md5_columns(*columns):
     return hashlib.md5(concat_columns.encode()).hexdigest()
 
 
+def generate_person_id():
+    return str(PersonId().id)
+
+
 def insert_into_db(sql_command, *parameters):
     conn = None
     try:
@@ -172,30 +184,68 @@ def load_data_into_db(thesis_df, load_date):
                             thesis_institution, thesis_problem, thesis_requirement, thesis_url))
             sat_detail_cache.add(hash_diff)
 
-        # Insert the degree programmes
+        # Insert the thesis detail link (lnk_thesis_details)
+        thesis_details_key = md5_columns(thesis_title, thesis_id)
+        if thesis_details_key not in lnk_thesis_details_cache:
+            hub_thesis_key = md5(thesis_title)
+            hub_details_key = md5(thesis_id)
+            insert_into_db("INSERT INTO lnk_thesis_details VALUES (%s, %s, %s, %s, %s);",
+                          (thesis_details_key, hub_thesis_key, hub_details_key, load_date, 'DigiDigger'))
+            lnk_thesis_details_cache.add(thesis_details_key)
+
+        # Insert the degree programmes (hub_degree_programm)
         thesis_programmes = str(thesis[2]).split('|')
         for thesis_programm in thesis_programmes:
             if md5(thesis_programm) not in hub_programm_cache:
-                insert_into_db("INSERT INTO hub_degree_programm VALUES (%s, %s, %s,%s);",
+                insert_into_db("INSERT INTO hub_degree_programm VALUES (%s, %s, %s, %s);",
                                (md5(thesis_programm), thesis_programm, load_date, 'DigiDigger'))
                 hub_programm_cache.add(md5(thesis_programm))
 
-        # Insert the contact persons
+            # Insert the thesis degree programm link (lnk_thesis_degree_programm)
+            detail_course_key = md5_columns(thesis_title, thesis_programm)
+            if detail_course_key not in lnk_detail_course_cache:
+                hub_thesis_key = md5(thesis_title)
+                hub_degree_key = md5(thesis_programm)
+                insert_into_db("INSERT INTO lnk_thesis_degree_programm VALUES (%s, %s, %s, %s, %s);",
+                            (detail_course_key, hub_thesis_key, hub_degree_key, load_date, 'DigiDigger'))
+                lnk_detail_course_cache.add(detail_course_key)
+
+        # Insert the contact persons (hub_person)
         thesis_contacts = str(thesis[4]).split('|')
         for thesis_contact in thesis_contacts:
+            # Check if the contact persons name is not yet in the database
+            person_id = generate_person_id()
             if md5(thesis_contact) not in hub_contact_author_cache:
-                # TODO: Actually the sequence is needed for calculating the PK
-                insert_into_db(
-                    "INSERT INTO hub_person (hub_person_key, hub_load_dts, hub_rec_src) VALUES (%s, %s, %s);",
-                    (md5(thesis_contact), load_date, 'DigiDigger'))
-                hub_contact_author_cache.add(md5(thesis_contact))
+                insert_into_db("INSERT INTO hub_person VALUES (%s, %s, %s, %s);",
+                    (md5(person_id), person_id, load_date, 'DigiDigger'))
+                hub_contact_author_cache.add(md5(person_id))
 
-        # Insert the author
+            # Insert the thesis contact link (lnk_thesis_contact)
+            thesis_contact_key = md5_columns(thesis_title, person_id)
+            if thesis_contact_key not in lnk_thesis_contact_cache:
+                hub_thesis_key = md5(thesis_title)
+                hub_person_key = md5(person_id)
+                insert_into_db("INSERT INTO lnk_thesis_contact VALUES (%s, %s, %s, %s, %s);",
+                               (thesis_contact_key, hub_thesis_key, hub_person_key, load_date, 'DigiDigger'))
+                lnk_thesis_contact_cache.add(thesis_contact_key)
+
+        # Insert the author (hub_person)
         thesis_author = str(thesis[11])
+        # Check if the authors name is not yet in the database
+        person_id = generate_person_id()
         if md5(thesis_author) not in hub_contact_author_cache:
-            insert_into_db("INSERT INTO hub_person (hub_person_key, hub_load_dts, hub_rec_src) VALUES (%s, %s, %s);",
-                           (md5(thesis_author), load_date, 'DigiDigger'))
+            insert_into_db("INSERT INTO hub_person VALUES (%s, %s, %s, %s);",
+                           (md5(thesis_author), person_id, load_date, 'DigiDigger'))
             hub_contact_author_cache.add(md5(thesis_author))
+
+        # Insert the detail author link (lnk_detail_author)
+        detail_author_key = md5_columns(thesis_id, person_id)
+        if detail_author_key not in lnk_detail_author_cache:
+            hub_details_key = md5(thesis_id)
+            hub_person_key = md5(person_id)
+            insert_into_db("INSERT INTO lnk_detail_author VALUES (%s, %s, %s, %s, %s);",
+                           (detail_author_key, hub_details_key, hub_person_key, load_date, 'DigiDigger'))
+            lnk_detail_author_cache.add(detail_author_key)
 
         # Insert the person satellite (sat_person)
         thesis_author = str(thesis[4])
@@ -212,7 +262,7 @@ def load_data_into_db(thesis_df, load_date):
                                (md5(thesis_contact), load_date, hash_diff, 'DigiDigger', thesis_contact))
                 sat_person_cache.add(hash_diff)
 
-        # Insert the departements
+        # Insert the departements (hub_departement)
         thesis_departements = str(thesis[14]).split('|')
         for thesis_departement in thesis_departements:
             if md5(thesis_departement) not in hub_departement_cache and thesis_departement != "None":
@@ -220,13 +270,31 @@ def load_data_into_db(thesis_df, load_date):
                                (md5(thesis_departement), thesis_departement, load_date, 'DigiDigger'))
                 hub_departement_cache.add(md5(thesis_departement))
 
-        # Insert the assigned courses
+            # Insert the detail departement link (lnk_detail_departement)
+            detail_departement_key = md5_columns(thesis_id, thesis_departement)
+            if detail_departement_key not in lnk_detail_departement_cache:
+                hub_details_key = md5(thesis_id)
+                hub_departement_key = md5(thesis_departement)
+                insert_into_db("INSERT INTO lnk_detail_departement VALUES (%s, %s, %s, %s, %s);",
+                               (detail_departement_key, hub_details_key, hub_departement_key, load_date, 'DigiDigger'))
+                lnk_detail_departement_cache.add(detail_departement_key)
+
+        # Insert the assigned courses (hub_course)
         thesis_courses = str(thesis[15]).split('|')
         for thesis_course in thesis_courses:
             if md5(thesis_course) not in hub_course_cache and thesis_course != "None":
                 insert_into_db("INSERT INTO hub_course VALUES (%s, %s, %s, %s);",
                                (md5(thesis_course), thesis_course, load_date, 'DigiDigger'))
                 hub_course_cache.add(md5(thesis_course))
+
+            # Insert the detail course link (lnk_detail_course)
+            detail_course_key = md5_columns(thesis_id, thesis_course)
+            if detail_course_key not in lnk_detail_course_cache:
+                hub_details_key = md5(thesis_id)
+                hub_course_key = md5(thesis_course)
+                insert_into_db("INSERT INTO lnk_detail_course VALUES (%s, %s, %s, %s, %s);",
+                               (detail_course_key, hub_details_key, hub_course_key, load_date, 'DigiDigger'))
+                lnk_detail_course_cache.add(detail_course_key)
 
 
 data_set_path = "../data-uol-thesis-topics"
