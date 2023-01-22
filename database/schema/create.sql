@@ -63,9 +63,7 @@ CREATE TABLE SAT_PERSON (
     SAT_LOAD_DTS date,
     HASH_DIFF char(32),
     SAT_Rec_SRC varchar(60),
-    SALUTATION varchar(50),
-    FIRSTNAME varchar(100),
-    LASTNAME varchar(100),
+    FULLNAME varchar(250),
     PRIMARY KEY (SAT_PERSON_KEY, SAT_LOAD_DTS)
 );
 
