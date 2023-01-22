@@ -4,7 +4,7 @@ import sys
 from datetime import datetime
 
 import pandas as pd
-import sqlalchemy
+import psycopg2
 
 
 def extract_departements(html_table_rows):
@@ -21,8 +21,8 @@ def extract_departements(html_table_rows):
         found_department_list = re.findall("<td><strong>Abteilungen</strong></td>.*?(<li>.*?)</ul>", row, re.DOTALL)
         if len(found_department_list) == 1:
             found_departements = re.findall("<li>(.*?)</li>", found_department_list[0], re.DOTALL)
-            # print('Found the departement(s) in HTML Rows: {}.'.format(found_departements))
-            return found_departements
+            # Return the found departements seperated by "|"
+            return "|".join(found_departements)
 
     print('ERROR: Departement list not present in HTML Rows! Exiting.')
     sys.exit()
@@ -48,8 +48,9 @@ def extract_assigned_courses(html_table_rows):
             # As last step replace special HTML entities (e.g. &quot; or &#039;)
             courses = [course.replace("&quot;", "\"") for course in found_courses]
             courses = [course.replace("&#039;", "'") for course in courses]
-            # print('Found the ({}) Assigned Course(s) in HTML Rows: {}.'.format(len(courses), courses))
-            return courses
+
+            # Return the found courses seperated by "|"
+            return "|".join(courses)
 
     print('ERROR: Departement list not present in HTML Rows! Exiting.')
     sys.exit()
@@ -79,18 +80,79 @@ def convert_german_date(date):
     return datetime.strftime(created_date, '%Y-%m-%d')
 
 
-def get_db_engine():
-    db_connection_uri = 'postgresql://{user}:{password}@{server}/{database}'
-    db_connect_uri = db_connection_uri.format(user="thesis_user",
-                                              password="aB2Ck91mN0LeA",
-                                              server="localhost",
-                                              database="thesis")
-    db_engine = sqlalchemy.create_engine(db_connect_uri)
-    return db_engine
+def md5(business_key):
+    # Hashes the Business Key column(s) with MD5
+    import hashlib
+    return hashlib.md5(business_key.encode()).hexdigest()
 
 
-def load_data_into_db(data):
-    engine = get_db_engine()
+def insert_into_database(sql_commands):
+    conn = None
+    try:
+        # Connect to the PostgreSQL database
+        conn = psycopg2.connect(
+            host="localhost",
+            port="5432",
+            database="thesis",
+            user="thesis_user",
+            password="aB2Ck91mN0LeA")
+
+        # create a cursor
+        cursor = conn.cursor()
+        cursor.execute(sql_commands)
+        conn.commit()
+
+        # close the communication with the PostgreSQL
+        cursor.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print("Error accessing database: {}".format(error))
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def load_data_into_db(thesis_df):
+    for thesis in thesis_df.itertuples(index=False):
+        # Insert the thesis (hub_thesis)
+        thesis_title = str(thesis[0])
+        insert_into_database("""INSERT INTO hub_thesis VALUES ('{}', '{}', '{}','{}');"""
+                             .format(md5(thesis_title), thesis_title, datetime.now(), 'DigiDigger'))
+
+        # Insert the thesis detail (hub_detail)
+        thesis_detail = str(thesis[7])
+        insert_into_database("""INSERT INTO hub_detail VALUES ('{}', '{}', '{}','{}');"""
+                             .format(md5(thesis_detail), thesis_detail, datetime.now(), 'DigiDigger'))
+
+        # Insert the degree programmes
+        thesis_programmes = str(thesis[2]).split('|')
+        for thesis_programm in thesis_programmes:
+            insert_into_database("""INSERT INTO hub_degree_programm VALUES ('{}', '{}', '{}','{}');"""
+                                 .format(md5(thesis_programm), thesis_programm, datetime.now(), 'DigiDigger'))
+
+        # Insert the contact persons
+        thesis_contacts = str(thesis[4]).split('|')
+        for thesis_contact in thesis_contacts:
+            insert_into_database("""INSERT INTO hub_person VALUES ('{}', '{}', '{}','{}');"""
+                                 .format(md5(thesis_contact), thesis_contact, datetime.now(), 'DigiDigger'))
+
+        # Insert the author
+        thesis_author = str(thesis[11])
+        insert_into_database("""INSERT INTO hub_person VALUES ('{}', '{}', '{}','{}');"""
+                             .format(md5(thesis_author), thesis_author, datetime.now(), 'DigiDigger'))
+
+        # Insert the departements
+        thesis_departements = str(thesis[14]).split('|')
+        for thesis_departement in thesis_departements:
+            if thesis_departement != "None":
+                insert_into_database("""INSERT INTO hub_departement VALUES ('{}', '{}', '{}','{}');"""
+                                     .format(md5(thesis_departement), thesis_departement, datetime.now(), 'DigiDigger'))
+
+        # Insert the assigned courses
+        thesis_courses = str(thesis[15]).split('|')
+        for thesis_course in thesis_courses:
+            if thesis_course != "None":
+                insert_into_database("""INSERT INTO hub_course VALUES ('{}', '{}', '{}','{}');"""
+                                     .format(md5(thesis_course), thesis_course, datetime.now(), 'DigiDigger'))
 
 
 data_set_path = "../data-uol-thesis-topics"
@@ -190,15 +252,27 @@ for export_dir in export_dir_set:
     merged_df = pd.merge(topic_detail_merged_df, html_details_df, how='inner', on='topic_id')
 
     # Check if the merge was successful
-    # topic_df.to_csv('topic_out.csv', index=False, encoding='utf-8', sep=';')
-    # topic_detail_df.to_csv('topic_detail_out.csv', index=False, encoding='utf-8', sep=';')
-    # html_details_df.to_csv('html_details_out.csv', index=False, encoding='utf-8', sep=';')
-    merged_df.to_csv('merged_out.csv', index=False, encoding='utf-8', sep=';')
     print("Topics found: db-topics: {}, db-topics-additional: {}, HTML Detail Export: {} -> Merged: {}"
           .format(len(topic_df.index), len(topic_detail_df.index), len(html_details_df.index), len(merged_df.index)))
     if not (len(topic_df.index) == len(topic_detail_df.index) == len(html_details_df.index) == len(merged_df.index)):
         print("Error: Number of topics in consolidation Dataframes differ!")
         sys.exit()
+
+    # Change the German Dataframe column names to English language
+    merged_df.rename(columns={'titel': 'title',
+                              'abschlussarbeitstyp': 'type_of_thesis',
+                              'studiengaenge': 'degree_programmes',
+                              'art_der_arbeit': 'type_of_work',
+                              'ansprechpartner': 'contact_person',
+                              'status': 'status',
+                              'erstellt': 'created',
+                              'beschreibung': 'description',
+                              'heimateinrichtung': 'home_institution',
+                              'autor': 'author',
+                              'aufgabenstellung': 'problem_statement',
+                              'voraussetzung': 'requirement'},
+                     inplace=True, errors='raise')
+    merged_df.to_csv('merged_out.csv', index=False, encoding='utf-8', sep=';')
 
     # After merging insert the data into the database
     load_data_into_db(merged_df)
