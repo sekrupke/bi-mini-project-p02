@@ -218,13 +218,14 @@ def load_data_into_db(thesis_df):
                 lnk_detail_course_cache.add(detail_course_key)
 
         # Insert the contact persons (hub_person)
+        person_id = "0"
         for thesis_contact in thesis_contacts:
             # Check if the contact persons name is not yet in the database
-            person_id = generate_person_id()
             if md5(thesis_contact) not in hub_contact_author_cache:
+                person_id = generate_person_id()
                 insert_into_db("INSERT INTO hub_person VALUES (%s, %s, %s, %s);",
                                (md5(person_id), person_id, load_date, 'DigiDigger'))
-                hub_contact_author_cache.add(md5(thesis_contact))
+                hub_contact_author_cache.add(md5(person_id))
 
             # Insert the thesis contact link (lnk_thesis_contact)
             thesis_contact_key = md5_columns(thesis_title, person_id)
@@ -237,7 +238,6 @@ def load_data_into_db(thesis_df):
 
         # Insert the author (hub_person)
         # Check if the authors name is not yet in the database
-        person_id = "0"
         if md5(thesis_author) not in hub_contact_author_cache:
             person_id = generate_person_id()
             insert_into_db("INSERT INTO hub_person VALUES (%s, %s, %s, %s);",
