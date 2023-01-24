@@ -89,6 +89,7 @@ def split_degree_programmes(degree_programmes):
     programmes = programmes.replace("Fach-Bachelor", "|Fach-Bachelor")
     programmes = programmes.replace("Master", "|Master")
     programmes = programmes.replace("Zwei-Fächer", "|Zwei-Fächer")
+    programmes = programmes.replace("Staatsexamen", "|Staatsexamen")
     programmes = programmes.removeprefix("|")
     return programmes
 
@@ -141,22 +142,35 @@ def insert_into_db(sql_command, *parameters):
             conn.close()
 
 
-def load_data_into_db(thesis_df, load_date):
+def load_data_into_db(thesis_df):
     for thesis in thesis_df.itertuples(index=False):
 
-        # Insert the thesis (hub_thesis)
+        # Read all needed values from the Dataframe
         thesis_title = str(thesis[0])
+        thesis_type = str(thesis[1])
+        thesis_programmes = str(thesis[2]).split('|')
+        thesis_work_type = str(thesis[3])
+        thesis_contacts = str(thesis[4]).split('|')
+        thesis_status = str(thesis[5])
+        thesis_created = str(thesis[6])
+        thesis_id = str(thesis[7])
+        thesis_url = str(thesis[8])
+        thesis_description = str(thesis[9])
+        thesis_institution = str(thesis[10])
+        thesis_author = str(thesis[11])
+        thesis_problem = str(thesis[12])
+        thesis_requirement = str(thesis[13])
+        thesis_departements = str(thesis[14]).split('|')
+        thesis_courses = str(thesis[15]).split('|')
+        load_date = str(thesis[16])
+
+        # Insert the thesis (hub_thesis)
         if md5(thesis_title) not in hub_title_cache:
             insert_into_db("INSERT INTO hub_thesis VALUES (%s, %s, %s, %s);",
                            (md5(thesis_title), thesis_title, load_date, 'DigiDigger'))
             hub_title_cache.add(md5(thesis_title))
 
         # Insert the thesis satellite (sat_thesis)
-        thesis_type = str(thesis[1])
-        thesis_work_type = str(thesis[3])
-        thesis_status = str(thesis[5])
-        thesis_created = str(thesis[6])
-        thesis_id = str(thesis[7])
         hash_diff = md5_columns(thesis_type, thesis_work_type, thesis_status, thesis_created, thesis_id)
         if hash_diff not in sat_thesis_cache:
             insert_into_db("INSERT INTO sat_thesis VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);",
@@ -165,22 +179,16 @@ def load_data_into_db(thesis_df, load_date):
             sat_thesis_cache.add(hash_diff)
 
         # Insert the thesis detail (hub_detail)
-        thesis_detail = str(thesis[7])
-        if md5(thesis_detail) not in hub_detail_cache:
+        if md5(thesis_id) not in hub_detail_cache:
             insert_into_db("INSERT INTO hub_detail VALUES (%s, %s, %s, %s);",
-                           (md5(thesis_detail), thesis_detail, load_date, 'DigiDigger'))
-            hub_detail_cache.add(md5(thesis_detail))
+                           (md5(thesis_id), thesis_id, load_date, 'DigiDigger'))
+            hub_detail_cache.add(md5(thesis_id))
 
         # Insert the thesis detail satellite (sat_details)
-        thesis_description = str(thesis[9])
-        thesis_institution = str(thesis[10])
-        thesis_problem = str(thesis[12])
-        thesis_requirement = str(thesis[13])
-        thesis_url = str(thesis[8])
         hash_diff = md5_columns(thesis_description, thesis_institution, thesis_problem, thesis_requirement, thesis_url)
         if hash_diff not in sat_detail_cache:
             insert_into_db("INSERT INTO sat_details VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);",
-                           (md5(thesis_detail), load_date, hash_diff, 'DigiDigger', thesis_description,
+                           (md5(thesis_id), load_date, hash_diff, 'DigiDigger', thesis_description,
                             thesis_institution, thesis_problem, thesis_requirement, thesis_url))
             sat_detail_cache.add(hash_diff)
 
@@ -194,7 +202,6 @@ def load_data_into_db(thesis_df, load_date):
             lnk_thesis_details_cache.add(thesis_details_key)
 
         # Insert the degree programmes (hub_degree_programm)
-        thesis_programmes = str(thesis[2]).split('|')
         for thesis_programm in thesis_programmes:
             if md5(thesis_programm) not in hub_programm_cache:
                 insert_into_db("INSERT INTO hub_degree_programm VALUES (%s, %s, %s, %s);",
@@ -211,14 +218,13 @@ def load_data_into_db(thesis_df, load_date):
                 lnk_detail_course_cache.add(detail_course_key)
 
         # Insert the contact persons (hub_person)
-        thesis_contacts = str(thesis[4]).split('|')
         for thesis_contact in thesis_contacts:
             # Check if the contact persons name is not yet in the database
             person_id = generate_person_id()
             if md5(thesis_contact) not in hub_contact_author_cache:
                 insert_into_db("INSERT INTO hub_person VALUES (%s, %s, %s, %s);",
                                (md5(person_id), person_id, load_date, 'DigiDigger'))
-                hub_contact_author_cache.add(md5(person_id))
+                hub_contact_author_cache.add(md5(thesis_contact))
 
             # Insert the thesis contact link (lnk_thesis_contact)
             thesis_contact_key = md5_columns(thesis_title, person_id)
@@ -230,13 +236,13 @@ def load_data_into_db(thesis_df, load_date):
                 lnk_thesis_contact_cache.add(thesis_contact_key)
 
         # Insert the author (hub_person)
-        thesis_author = str(thesis[11])
         # Check if the authors name is not yet in the database
-        person_id = generate_person_id()
+        person_id = "0"
         if md5(thesis_author) not in hub_contact_author_cache:
+            person_id = generate_person_id()
             insert_into_db("INSERT INTO hub_person VALUES (%s, %s, %s, %s);",
-                           (md5(thesis_author), person_id, load_date, 'DigiDigger'))
-            hub_contact_author_cache.add(md5(thesis_author))
+                           (md5(person_id), person_id, load_date, 'DigiDigger'))
+            hub_contact_author_cache.add(md5(person_id))
 
         # Insert the detail author link (lnk_detail_author)
         detail_author_key = md5_columns(thesis_id, person_id)
@@ -248,22 +254,20 @@ def load_data_into_db(thesis_df, load_date):
             lnk_detail_author_cache.add(detail_author_key)
 
         # Insert the person satellite (sat_person)
-        thesis_author = str(thesis[11])
         hash_diff = md5(thesis_author)
         if hash_diff not in sat_person_cache:
             insert_into_db("INSERT INTO sat_person VALUES (%s, %s, %s, %s, %s);",
-                           (md5(thesis_author), load_date, hash_diff, 'DigiDigger', thesis_author))
+                           (md5(person_id), load_date, hash_diff, 'DigiDigger', thesis_author))
             sat_person_cache.add(hash_diff)
-        thesis_contacts = str(thesis[4].split('|'))
         for thesis_contact in thesis_contacts:
             hash_diff = md5(thesis_contact)
             if hash_diff not in sat_person_cache:
+                person_id = generate_person_id()
                 insert_into_db("INSERT INTO sat_person VALUES (%s, %s, %s, %s, %s);",
-                               (md5(thesis_contact), load_date, hash_diff, 'DigiDigger', thesis_contact))
+                               (md5(person_id), load_date, hash_diff, 'DigiDigger', thesis_contact))
                 sat_person_cache.add(hash_diff)
 
         # Insert the departements (hub_departement)
-        thesis_departements = str(thesis[14]).split('|')
         for thesis_departement in thesis_departements:
             if md5(thesis_departement) not in hub_departement_cache and thesis_departement != "None":
                 insert_into_db("INSERT INTO hub_departement VALUES (%s, %s, %s, %s);",
@@ -280,7 +284,6 @@ def load_data_into_db(thesis_df, load_date):
                 lnk_detail_departement_cache.add(detail_departement_key)
 
         # Insert the assigned courses (hub_course)
-        thesis_courses = str(thesis[15]).split('|')
         for thesis_course in thesis_courses:
             if md5(thesis_course) not in hub_course_cache and thesis_course != "None":
                 insert_into_db("INSERT INTO hub_course VALUES (%s, %s, %s, %s);",
@@ -416,12 +419,15 @@ for export_dir in export_dir_set:
                               'voraussetzung': 'requirement'},
                      inplace=True, errors='raise')
 
+    # Add the export date to the merged data (load_dts for the database tables)
+    export_date = "{}-{}-{}".format(export_dir[:4], export_dir[4:6], export_dir[6:8])
+    merged_df['export_date'] = export_date
+
     # Write merged Dataframe with thesis data to CSV file for testing purposes
     merged_df.to_csv('merged_thesis_data.csv', mode='a', index=False, encoding='utf-8', sep=';')
 
-    # After merging insert the data into the database with the load date (date of export dir)
-    export_date = "{}-{}-{}".format(export_dir[:4], export_dir[4:6], export_dir[6:8])
-    load_data_into_db(merged_df, export_date)
+    # Write merged thesis data in the database
+    load_data_into_db(merged_df)
 
     # Calculate the ETL process progress
     number_of_finished_dirs += 1
