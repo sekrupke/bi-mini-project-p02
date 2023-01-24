@@ -8,6 +8,13 @@ import psycopg2
 
 from id_generator import PersonId
 
+# Database connection parameters
+LOCALHOST = "localhost"
+PORT = "5432"
+DATABASE = "thesis"
+USER = "thesis_user"
+PASSWORD = "aB2Ck91mN0LeA"
+
 # Use sets for md5 hash values of already inserted rows in hubs, satellites and links
 hub_title_cache = set()
 hub_detail_cache = set()
@@ -122,11 +129,11 @@ def insert_into_db(sql_command, *parameters):
     try:
         # Connect to the PostgreSQL database
         conn = psycopg2.connect(
-            host="localhost",
-            port="5432",
-            database="thesis",
-            user="thesis_user",
-            password="aB2Ck91mN0LeA")
+            host=LOCALHOST,
+            port=PORT,
+            database=DATABASE,
+            user=USER,
+            password=PASSWORD)
 
         # create a cursor
         cursor = conn.cursor()

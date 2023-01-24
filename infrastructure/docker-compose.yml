@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  postgres-database:
+    image: postgres
+    container_name: postgres_database
+    hostname: postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres_user
+      - POSTGRES_PASSWORD=a9Mkw7AlsA2h1
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data:delegated
+        # Directory for database thesis schema sql scripts
+      - ./database/schema/create.sql:/docker-entrypoint-initdb.d/create.sql
+    networks:
+    - postgres-database-network
+
+  metabase-application:
+    image: metabase/metabase
+    container_name: metabase_application
+    hostname: metabase
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./metabase-data:/metabase-data
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: metabase
+      MB_DB_PORT: 5432
+      MB_DB_USER: postgres_user
+      MB_DB_PASS: a9Mkw7AlsA2h1
+      MB_DB_HOST: postgres-database
+    depends_on:
+      - postgres-database
+    networks:
+      - postgres-database-network
+
+networks:
+  postgres-database-network:
+    driver: bridge
