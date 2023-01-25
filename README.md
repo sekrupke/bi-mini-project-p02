@@ -1,10 +1,15 @@
 # BI Mini-Project P02
 
 ## Introduction
-This is a BI Mini Project that was developed at the University of Oldenburg. The project is based on a dataset of thesis topics offered at the university.
+BI Mini Project that was developed at the University of Oldenburg. The project is based on a dataset of thesis topics offered at the university.
+
+This document is a detailed technical report about implementation. For setting up the project see _SETUP.md_.
 
 ## Milestones of the project
-The project consists of 5 major Milestones which are described in detail in this document.
+The main goal of the project is to answer specific business questions and determine KPIs based on
+the data given in the dataset.
+
+The project is divided in 5 major milestones which are described in detail in this document.
 * Step 1: Review of the Data Set
 * Step 2: Data Vault Model
 * Step 3: Database Schema and Database
@@ -85,32 +90,40 @@ Based on the Data Vault Model the next step is the creation of the Database Sche
 ## Step 3: Database Schema and Database
 The next step is to define the Database Schema and to install and configure the PostgreSQL Database.
 
-First, the Database Schema is derived from the Data Vault Model in Step 2. It already contains the needed data types as well as the relations between Hubs, Links and Satelites (the tables). So there is already logical information about the data. 
-The Database Schema is created via the Data Definition Language SQL. As this project uses PostgreSQL as DBMS, the SQL Dialect for PostgreSQL must be considered. The resulting SQL script for the creation of the schema is placed under *database/schema*. As a first step, only the Primary Keys (PK) were added as constraints.
+First, the Database Schema is derived from the Data Vault Model in Step 2. It already contains the needed data types as well as the relations between Hubs, Links and Satellites (the tables). So there is already logical information about the data. 
+The Database Schema is created via the Data Definition Language SQL. As this project uses PostgreSQL as DBMS, the SQL Dialect for PostgreSQL must be considered. 
 
-Next, the PostgreSQL Database must be installed on the local machine by downloading the executables/binaries etc. The database will be the target for the ETL-Process.
+The resulting SQL script for the creation of the schema is placed under *infrastructure/database*. As a first step, only the Primary Keys (PK) were added as constraints.
+Furthermore, the SQL script contains the creation of the thesis database with a user and permission, as 
+well as the database creation for the Metabase application (see Step 5).
 
-`Note: Later on, Docker and Docker Compose will be used. For now, a local PostgreSQL Server is used with default configuration.
-For now the setup of the database is described in the SETUP.md file.`
+For automation purposes, the PostgreSQL Database is created and configured by Docker via 
+Docker Compose (see _infrastructure/docker-compose.yml_).
 
 ## Step 4: ETL-Process
 After understanding the data and setting up the database with the database schema the ETL-Process can be started.
 The dataset contains about 2.2GB of raw data that is assumed to contain a lot of duplicated data due to the daily export of the thesis topic list and thesis topic details. The data fields for single thesis do not change so frequently. Several files contain the same data fields (see Table in Step 1) and the HTML files contain a lot of HTML-Elements etc. that are not relevant for the project (e.g. Stud.IP menu bar).
 
-Before starting the ETL-Process, cleanup of the data set/ data set structure may be reasonable. Further information and 
-necessary cleaning is described in the SETUP.md (Preparing the Data Set).
+Before starting the ETL-Process, cleanup of the data set/ data set structure may be reasonable. Further information and necessary cleaning is described in the _SETUP.md_ (_Preparing the Data Set_).
 
-To extract and transform the data from the original data set into a "consolidated" data set a Python script is used. The script does the following steps:
-* Iterate over all daily export folders
-    * Extract all relevant data fields from the files into memory
-      * Extract data fields from db-topics.csv
-      * Extract data fields from db-topics-additional.csv
-      * Extract data fields from Thesis Details HTML-Export (complex HTML-Parsing)
-    * Transform the data fields as needed
-    * Based on the data (new thesis, changed thesis, deleted thesis) add it to the memory
-* Write the memory into a result file for later loading into the database
+To extract and transform the data from the original data set into a "consolidated" data set a Python script is used. 
+For working with the data the _Pandas Framework_ was used, as it provides convenient functionalities (e.g. Dataframes) 
+for ETL processes. The script does the following steps for _each_ export folder in the dataset:
 
-For further information see the commented source code under *etl/consolidate.py*. For the extraction of data from the 
-HTML-Export complex functions were needed.
+* Extract all relevant data fields from the different files into memory
+  * Extract data fields from db-topics.csv
+  * Extract data fields from db-topics-additional.csv
+  * Extract data fields from Thesis Details HTML-Export (complex HTML-Parsing)
+* Transform the extracted data fields as needed
+* Merge the data fields from the different files
+* Import the data into the database by SQL insert statements
 
-In order to execute the Python script the development environment must be configured. Further information is in the SETUP.md (Creating Python Environment).
+For the extraction of data from the HTML-Exports complex functions were needed, whereas the CSV files were read into 
+memory by Dataframes (_Pandas_). For the connection and import into the Database the Framework _psycopg2_ was used.
+
+For further information see the commented source code under *etl/consolidate.py*. 
+
+In order to execute the ETL process (Python Script) the development environment must be configured. This is described 
+in the SETUP.md (Creating Python Environment).
+
+## Step 5: Visualization and KPIs (Project Tasks)

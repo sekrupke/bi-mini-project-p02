@@ -26,27 +26,14 @@ Removing two of the three duplicated folders:\
 Another issue in the dataset can be missing files, as in the export from 20220908. In the folder `data-uol-thesis-topics/20220908_2b64/` several files (like db-topics.csv) are missing. Therefore, we delete the export from that day:\
 `rm -r data-uol-thesis-topics/20220908_2b64/`
 
-## Installing PostgresSQL
-The PostgreSQL Database must be installed on the local machine by downloading the executables/binaries that fit to the
-operating system. (TODO: Automatic Docker Script (Docker Compose)
+## Installing PostgreSQL and Metabase
+The PostgreSQL Database is required for the import of the thesis data and for the Metabase application. Metabase is 
+needed for data visualisation and creation of dashboards. 
+As the infrastructure is automated by Docker and Docker Compose, we just need to run the file _docker-compose.yml_ to install PostgreSQL and Metabase:\
+`cd infrastructure`\
+`docker-compose up`
 
-After installation the Database must be configured:
-- Create Database "thesis"
-- Basic User with Password for Database "thesis"
-- Execute the SQL-Script "create.sql" in the folder database/schema/.
-
-Start the database (TODO: Docker)
-`/usr/local/opt/postgresql/bin/postgres -D /usr/local/var/postgres`
-
-Create Database "thesis":\
-`CREATE DATABASE thesis;`
-
-Create user and grant privileges for Database "thesis":\
-`CREATE USER thesis_user WITH ENCRYPTED PASSWORD 'aB2Ck91mN0LeA';`\
-`GRANT ALL PRIVILEGES ON DATABASE thesis TO thesis_user;`
-
-Execute the SQL-Script "create.sql" in the folder database/schema/:\
-`Copy script into Database Console...`
+The creation of the databases "thesis" and "metabase" with tables, users etc. is fully automated as the SQL-script (database/create.sql) is copied into "docker-entrypoint-initdb.d" and executed automatically.
 
 ## Creating Python Environment
 For development a virtual Python environment is recommended to track and install the requirements. This step is only 
@@ -65,11 +52,10 @@ Download and installation of the Python Requirements:\
 `pip install -r requirements.txt`
 
 ## Execute the ETL process
-The process first extracts and transforms the consolidated data fields from the data set. After that the consolidated 
-data is loaded into the database by SQL-Insert scripts.
+The ETL process is fully automated by a Python Script, that also loads the data into the Database "thesis".
 
 Start the Python script for extract and transform steps (activated virtual environment):\
 `python3 consolidate.py`
 
-## Installing Metabase
-This will be realised with Automatic Docker Script (Docker Compose)...
+## Configuring and using Metabase
+TODO: Describe
