@@ -1,4 +1,4 @@
--- This script is for cleanup for testing purposes
+-- This script is only for cleanup/ testing purposes.
 DELETE FROM hub_thesis;
 DELETE FROM hub_detail;
 DELETE FROM hub_departement;

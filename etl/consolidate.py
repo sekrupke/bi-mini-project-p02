@@ -228,47 +228,46 @@ def load_data_into_db(thesis_df):
         for thesis_contact in thesis_contacts:
             # Check if the contact persons name is not yet in the database
             if md5(thesis_contact) not in hub_contact_author_cache:
-                person_id = generate_person_id()
+                thesis_person_id = generate_person_id()
                 insert_into_db("INSERT INTO hub_person VALUES (%s, %s, %s, %s);",
-                               (md5(person_id), person_id, load_date, 'DigiDigger'))
+                               (md5(thesis_person_id), thesis_person_id, load_date, 'DigiDigger'))
                 hub_contact_author_cache.add(md5(thesis_contact))
 
                 # Insert the person satellite (sat_person) for contacts
                 hash_diff = md5(thesis_contact)
                 if hash_diff not in sat_person_cache:
-                    person_id = generate_person_id()
                     insert_into_db("INSERT INTO sat_person VALUES (%s, %s, %s, %s, %s);",
-                                   (md5(person_id), load_date, hash_diff, 'DigiDigger', thesis_contact))
+                                   (md5(thesis_person_id), load_date, hash_diff, 'DigiDigger', thesis_contact))
                     sat_person_cache.add(hash_diff)
 
                 # Insert the thesis contact link (lnk_thesis_contact)
-                thesis_contact_key = md5_columns(thesis_title, person_id)
+                thesis_contact_key = md5_columns(thesis_title, thesis_person_id)
                 if thesis_contact_key not in lnk_thesis_contact_cache:
                     hub_thesis_key = md5(thesis_title)
-                    hub_person_key = md5(person_id)
+                    hub_person_key = md5(thesis_person_id)
                     insert_into_db("INSERT INTO lnk_thesis_contact VALUES (%s, %s, %s, %s, %s);",
                                    (thesis_contact_key, hub_thesis_key, hub_person_key, load_date, 'DigiDigger'))
                     lnk_thesis_contact_cache.add(thesis_contact_key)
 
         # Insert the author (hub_person)
         if md5(thesis_author) not in hub_contact_author_cache:
-            person_id = generate_person_id()
+            author_person_id = generate_person_id()
             insert_into_db("INSERT INTO hub_person VALUES (%s, %s, %s, %s);",
-                           (md5(person_id), person_id, load_date, 'DigiDigger'))
+                           (md5(author_person_id), author_person_id, load_date, 'DigiDigger'))
             hub_contact_author_cache.add(md5(thesis_author))
 
             # Insert the person satellite (sat_person) for author
             hash_diff = md5(thesis_author)
             if hash_diff not in sat_person_cache:
                 insert_into_db("INSERT INTO sat_person VALUES (%s, %s, %s, %s, %s);",
-                               (md5(person_id), load_date, hash_diff, 'DigiDigger', thesis_author))
+                               (md5(author_person_id), load_date, hash_diff, 'DigiDigger', thesis_author))
                 sat_person_cache.add(hash_diff)
 
             # Insert the detail author link (lnk_detail_author)
-            detail_author_key = md5_columns(thesis_id, person_id)
+            detail_author_key = md5_columns(thesis_id, author_person_id)
             if detail_author_key not in lnk_detail_author_cache:
                 hub_details_key = md5(thesis_id)
-                hub_person_key = md5(person_id)
+                hub_person_key = md5(author_person_id)
                 insert_into_db("INSERT INTO lnk_detail_author VALUES (%s, %s, %s, %s, %s);",
                                (detail_author_key, hub_details_key, hub_person_key, load_date, 'DigiDigger'))
                 lnk_detail_author_cache.add(detail_author_key)

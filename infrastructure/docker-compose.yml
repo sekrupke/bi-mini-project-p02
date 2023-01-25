@@ -13,7 +13,7 @@ services:
       - POSTGRES_USER=postgres_user
       - POSTGRES_PASSWORD=a9Mkw7AlsA2h1
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data:delegated
+      - ./postgres-data:/var/lib/postgresql/data
         # Directory for database thesis schema sql scripts
       - ./database/schema/create.sql:/docker-entrypoint-initdb.d/create.sql
     networks:
