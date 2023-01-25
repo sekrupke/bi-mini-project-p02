@@ -128,12 +128,7 @@ def insert_into_db(sql_command, *parameters):
     conn = None
     try:
         # Connect to the PostgreSQL database
-        conn = psycopg2.connect(
-            host=LOCALHOST,
-            port=PORT,
-            database=DATABASE,
-            user=USER,
-            password=PASSWORD)
+        conn = psycopg2.connect(host=LOCALHOST, port=PORT, database=DATABASE, user=USER, password=PASSWORD)
 
         # create a cursor
         cursor = conn.cursor()
@@ -339,7 +334,7 @@ for export_dir in export_dir_set:
         print("An error occurred opening the file {}:".format(db_topics_path), e)
         sys.exit()
 
-    # Load data from db-topics-additional.csv (see README.md: Step 1 )
+    # Load data from db-topics-additional.csv (see README.md: Step 1)
     try:
         topic_detail_df = pd.read_csv(db_topics_detail_path, sep=";")
     except FileNotFoundError:
@@ -429,14 +424,14 @@ for export_dir in export_dir_set:
     merged_df['export_date'] = export_date
 
     # Write merged Dataframe with thesis data to CSV file for testing purposes
-    merged_df.to_csv('merged_thesis_data.csv', mode='a', index=False, encoding='utf-8', sep=';')
+    # merged_df.to_csv('merged_thesis_data.csv', mode='a', index=False, encoding='utf-8', sep=';')
 
     # Write merged thesis data in the database
     load_data_into_db(merged_df)
 
-    # Calculate the ETL process progress
+    # Calculate the progress of ETL process
     number_of_finished_dirs += 1
     progress = round((number_of_finished_dirs / number_of_dirs) * 100, 2)
-    print('Finished! Progress: {}%'.format(progress))
+    print('Finished. Progress: {}%'.format(progress))
 
 print("Import and consolidation of the data set finished.")
