@@ -55,9 +55,9 @@ Download and installation of the Python Requirements:\
 `pip install -r requirements.txt`
 
 ## Execute the ETL process
-The ETL process is fully automated by a Python Script, that also loads the data into the Database "thesis".
+The ETL process is fully automated by a Python Script, that also loads the data into the PostgreSQL database "thesis".
 
-Start the Python script for extract and transform steps (activated virtual environment):\
+Start the Python script for extract and transform steps (in virtual environment):\
 `python3 consolidate.py`
 
 ## Configuring and using Metabase
@@ -78,4 +78,4 @@ go to Metabase by "Take me to Metabase".
 Now Metabase is ready to use. For instance, we can directly use automatic explorations from the Home Screen of Metabase:
 ![Metabase Explorations](images/metabase_explorations.png)
 
-The next steps (answering the business questions etc.) are described in the README.md
+With this, the setup of the project and infrastructure is complete.
