@@ -26,8 +26,6 @@ services:
     restart: always
     ports:
       - "3000:3000"
-    volumes:
-      - ./metabase-data:/metabase-data
     environment:
       MB_DB_TYPE: postgres
       MB_DB_DBNAME: metabase

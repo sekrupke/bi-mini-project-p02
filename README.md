@@ -82,7 +82,7 @@ The following decisions or assumptions were made while creating the Data Vault M
 * The Hub Person uses a PERSON_ID as a business key because there may be persons with exactly the same name.
 * The title of a thesis (see Hub Thesis) is assumed to be unique.
 * As there is no business key for the Hub Details, the same value as in the TOPIC_ID is used (it is the ID of the thesis).
-* Some Hubs missing Satelites because no additional descriptive columns are in the dataset. This may change in the future so it is possible to add new Satelites later on.
+* Some Hubs missing Satellites because no additional descriptive columns are in the dataset. This may change in the future so it is possible to add new Satellites later on.
 * The inclusion of the business keys of parent Hubs in the Link is not yet used (Data Vault 2.0 feature).
 
 Based on the Data Vault Model the next step is the creation of the Database Schema.
@@ -97,14 +97,16 @@ The resulting SQL script for the creation of the schema is placed under *infrast
 Furthermore, the SQL script contains the creation of the thesis database with a user and permission, as 
 well as the database creation for the Metabase application (see Step 5).
 
-For automation purposes, the PostgreSQL Database is created and configured by Docker via 
-Docker Compose (see _infrastructure/docker-compose.yml_).
+The PostgreSQL Database is automatically created and configured by Docker via Docker Compose 
+(see _infrastructure/docker-compose.yml_). The PostgreSQL Database Service is configured with a Docker volume in order to
+persist the database and not loose data after restart.
 
 ## Step 4: ETL-Process
 After understanding the data and setting up the database with the database schema the ETL-Process can be started.
 The dataset contains about 2.2GB of raw data that is assumed to contain a lot of duplicated data due to the daily export of the thesis topic list and thesis topic details. The data fields for single thesis do not change so frequently. Several files contain the same data fields (see Table in Step 1) and the HTML files contain a lot of HTML-Elements etc. that are not relevant for the project (e.g. Stud.IP menu bar).
 
-Before starting the ETL-Process, cleanup of the data set/ data set structure may be reasonable. Further information and necessary cleaning is described in the _SETUP.md_ (_Preparing the Data Set_).
+Before starting the ETL-Process, cleanup of the data set and its structure may be reasonable. Further information and 
+necessary cleaning is described in the _SETUP.md_ (_Preparing the Data Set_).
 
 To extract and transform the data from the original data set into a "consolidated" data set a Python script is used. 
 For working with the data the _Pandas Framework_ was used, as it provides convenient functionalities (e.g. Dataframes) 
@@ -120,6 +122,9 @@ for ETL processes. The script does the following steps for _each_ export folder 
 
 For the extraction of data from the HTML-Exports complex functions were needed, whereas the CSV files were read into 
 memory by Dataframes (_Pandas_). For the connection and import into the Database the Framework _psycopg2_ was used.
+As a generator person id was needed for inserting the authors and contacts into the thesis database, an own id generator 
+was implemented (see etl/id_generator.py). As an alternative, a database sequence could be used but must be queried 
+before every new person insert.
 
 For further information see the commented source code under *etl/consolidate.py*. 
 
@@ -127,3 +132,19 @@ In order to execute the ETL process (Python Script) the development environment 
 in the SETUP.md (Creating Python Environment).
 
 ## Step 5: Visualization and KPIs (Project Tasks)
+The last step after importing the thesis data into the database is the querying, visualization and the evaluation of KPIs. With 
+the visualization and KPIs the business questions can be answered.
+
+The visualizations and dashboards are created in Metabase. Metabase uses the supplied PostgreSQL database for saving 
+internal data like Dashboards (see Step 3). Metabase is automatically installed and configured by Docker via Docker Compose
+(see _infrastructure/docker-compose.yml_). For connectivity between Metabase and the PostgreSQL Database, the environment 
+variables of Metabase and a network bridge are configured in the _docker-compose.yml_ file.
+
+As further automation of Metabase via configuration files is only available in the Enterprise/ Pro version, manual 
+configuration of the user and thesis database connection is needed. This is documented in 
+_SETUP.md (Configuring and using Metabase)_.
+
+After further configuration of Metabase the thesis data can be used for answering business questions and evaluating KPIs.
+
+**As this is a public project and the data set contains personal information, the creation of queries/ KPIs, visualizations and 
+dashboards is documented in the separate (private) file `PO2_Sebastian_Krupke.docx`!**

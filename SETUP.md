@@ -23,7 +23,8 @@ Removing two of the three duplicated folders:\
 `rm -r data-uol-thesis-topics/20210719_2cb1/`\
 `rm -r data-uol-thesis-topics/20210719_4196/`
 
-Another issue in the dataset can be missing files, as in the export from 20220908. In the folder `data-uol-thesis-topics/20220908_2b64/` several files (like db-topics.csv) are missing. Therefore, we delete the export from that day:\
+Another issue in the dataset is missing files in the export from 2022-09-08. In the folder `data-uol-thesis-topics/20220908_2b64/` 
+several files (like db-topics.csv) are missing. Therefore, we must the export from that day:\
 `rm -r data-uol-thesis-topics/20220908_2b64/`
 
 ## Installing PostgreSQL and Metabase
@@ -34,6 +35,8 @@ As the infrastructure is automated by Docker and Docker Compose, we just need to
 `docker-compose up`
 
 The creation of the databases "thesis" and "metabase" with tables, users etc. is fully automated as the SQL-script (database/create.sql) is copied into "docker-entrypoint-initdb.d" and executed automatically.
+
+`Note: For further steps it is assumed that the Docker containers are running.`
 
 ## Creating Python Environment
 For development a virtual Python environment is recommended to track and install the requirements. This step is only 
@@ -58,4 +61,21 @@ Start the Python script for extract and transform steps (activated virtual envir
 `python3 consolidate.py`
 
 ## Configuring and using Metabase
-TODO: Describe
+The installation and basic configuration was already done by Docker Compose.
+
+Now we need to create a Metabase user and the thesis database connection by opening the Metabase UI. Metabase is 
+accessible by opening the Endpoint given by Docker/ Docker Console, it should be: http://0.0.0.0:3000/
+
+First step is to run the initial configuration with the wizard, after clicking "Let's Go" on the welcome screen:
+![Metabase User Config](images/metabase_user_config.png)
+
+Choose language (1) and insert contact data (2). After that we connect our thesis database to Metabase (3):
+![Metabase Database Config](images/metabase_database_config.png)
+
+The wizard step (4) for usage data preferences is optional and can be disabled. After clicking "Finish" we can directly
+go to Metabase by "Take me to Metabase".
+
+Now Metabase is ready to use. For instance, we can directly use automatic explorations from the Home Screen of Metabase:
+![Metabase Explorations](images/metabase_explorations.png)
+
+The next steps (answering the business questions etc.) are described in the README.md
