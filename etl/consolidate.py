@@ -124,6 +124,12 @@ def generate_person_id():
     return str(PersonId().id)
 
 
+def determine_removal_date(thesis_df):
+    return thesis_df
+
+# No calculation of removal date when no data from yesterday is present
+
+
 def insert_into_db(sql_command, *parameters):
     conn = None
     try:
@@ -145,6 +151,10 @@ def insert_into_db(sql_command, *parameters):
 
 
 def load_data_into_db(thesis_df):
+    # Variables for calculation of database import progress
+    number_of_thesis = len(thesis_df)
+    imported_thesis = 0
+
     for thesis in thesis_df.itertuples(index=False):
 
         # Read all needed values from the Dataframe
@@ -299,13 +309,19 @@ def load_data_into_db(thesis_df):
                                (detail_course_key, hub_details_key, hub_course_key, load_date, 'DigiDigger'))
                 lnk_detail_course_cache.add(detail_course_key)
 
+        # Calculate the progress of database import
+        imported_thesis += 1
+        if imported_thesis == 1 or imported_thesis == number_of_thesis or imported_thesis % 20 == 0:
+            import_progress = round((imported_thesis / number_of_thesis) * 100, 2)
+            print('Database import progress: {}%'.format(import_progress))
+
 
 data_set_path = "../data-uol-thesis-topics"
 db_topics_filename = "db-topics.csv"
 db_topics_add_filename = "db-topics-additional.csv"
 export_dir_set = set()
 
-print('Starting the import and consolidation of the data set ({}).'.format(data_set_path))
+print('Starting the import and transformation of the data set ({}).'.format(data_set_path))
 for dirname in os.listdir(data_set_path):
     export_dir_set.add(dirname)
 
@@ -313,9 +329,12 @@ for dirname in os.listdir(data_set_path):
 export_dir_set = sorted(export_dir_set)
 export_dir_set[:] = [d for d in export_dir_set if not d.startswith('.')]
 
-# Variables for calculation of progress
+# Variables for calculation of extraction and transformation progress
 number_of_dirs = len(export_dir_set)
 number_of_finished_dirs = 0
+
+# Dataframe variable for the output of the transform process (all thesis data)
+transformed_thesis_df = None
 
 # Iterate over every export folder in the data set directory
 for export_dir in export_dir_set:
@@ -399,11 +418,6 @@ for export_dir in export_dir_set:
     # Merge the resulting Dataframe with the html_details_df
     merged_df = pd.merge(topic_detail_merged_df, html_details_df, how='inner', on='topic_id')
 
-    # Check if the merge was successful by comparing length of all Dataframes
-    if not (len(topic_df.index) == len(topic_detail_df.index) == len(html_details_df.index) == len(merged_df.index)):
-        print("Error: Number of topics in consolidation Dataframes differ!")
-        sys.exit()
-
     # Change the German Dataframe column names to English language
     merged_df.rename(columns={'titel': 'title',
                               'abschlussarbeitstyp': 'type_of_thesis',
@@ -423,15 +437,40 @@ for export_dir in export_dir_set:
     export_date = "{}-{}-{}".format(export_dir[:4], export_dir[4:6], export_dir[6:8])
     merged_df['export_date'] = export_date
 
-    # Write merged Dataframe with thesis data to CSV file for testing purposes
-    # merged_df.to_csv('merged_thesis_data.csv', mode='a', index=False, encoding='utf-8', sep=';')
+    # Check if the merge was successful by comparing length of all Dataframes
+    if not (len(topic_df.index) == len(topic_detail_df.index) == len(html_details_df.index) == len(merged_df.index)):
+        print("Error: Number of topics in consolidation Dataframes differ!")
+        sys.exit()
 
-    # Write merged thesis data in the database
-    load_data_into_db(merged_df)
+    # Append the merged Dataframe for the export folder to resulting Dataframe
+    if transformed_thesis_df is not None:
+        transformed_thesis_df = pd.concat([transformed_thesis_df, merged_df], ignore_index=True)
+    else:
+        # The first daily export can be assigned directly
+        transformed_thesis_df = merged_df
 
-    # Calculate the progress of ETL process
+    # Calculate the progress of Extraction and Transformation process
     number_of_finished_dirs += 1
     progress = round((number_of_finished_dirs / number_of_dirs) * 100, 2)
     print('Finished. Progress: {}%'.format(progress))
 
-print("Import and consolidation of the data set finished.")
+# With the whole transformed thesis Dataframe a duplication check is possible (drop all full duplicates)
+# The export_date must be ignored because two thesis only differ in export_date are the same from business perspektive
+relevant_columns = transformed_thesis_df.columns.difference(['export_date'])
+print("Total number of thesis entries imported: {}".format(len(transformed_thesis_df)))
+transformed_thesis_df.drop_duplicates(subset=relevant_columns, inplace=True, keep='last')
+print("Cleaned (unique) number of thesis entries imported: {}".format(len(transformed_thesis_df)))
+# Write transformed Dataframe with thesis data to CSV file for testing purposes
+transformed_thesis_df.to_csv('transformed_thesis_df.csv', mode='a', index=False, encoding='utf-8', sep=';')
+
+# Determine the removal date of the thesis (when possible due to missing export data, see README.md, Step 4).
+print("Trying to determine removal date of thesis...")
+transformed_thesis_df = determine_removal_date(transformed_thesis_df)
+print("Finished the import and transformation of the data set ({}).".format(data_set_path))
+
+print("Starting with the database import of the transformed thesis data.")
+
+# Write merged thesis data in the database
+# load_data_into_db(transformed_thesis_df)
+
+print("Finished the the database import of the transformed thesis data. Exiting script.")

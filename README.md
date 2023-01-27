@@ -8,6 +8,7 @@ This document is a detailed technical report about implementation. For setting u
 ## Milestones of the project
 The main goal of the project is to answer specific business questions and determine KPIs based on
 the data given in the dataset.
+The business questions and mandatory KPIs are listed in a separate task document (_P02 - Task for BI mini-project_).
 
 The project is divided in 5 major milestones which are described in detail in this document.
 * Step 1: Review of the Data Set
@@ -23,7 +24,7 @@ As the data is exported from the Stud.IP-Thesis Plugin which implements a pagina
 The image describes the structure of the data set (number of files in /additional reduced for image):
 ![Thesis topics data description](presentation/thesis_topics_data.png)
 
-`Note: The HTML-Export in the data set only contains the first three pages and the last page of the thesis topic list. This unintentionally missing data is considered by best effort but may result in inconsistent results later on!`
+`Note: The HTML-Export in the data set only contains the first three pages and the last page of the thesis topic list. This unintentionally missing data is considered by best effort (see Step 4: ETL) but may result in inconsistent results later on!`
 
 The first step is to analyze the given data and data fields across the files in the data set.
 Analyzing the HTML Exports and CSV/JSON-files yields to a list of all available data fields, with some internal fields only given in the CSV/JSON-files like the "topic_id".
@@ -118,6 +119,9 @@ for ETL processes. The script does the following steps for _each_ export folder 
   * Extract data fields from Thesis Details HTML-Export (complex HTML-Parsing)
 * Transform the extracted data fields as needed
 * Merge the data fields from the different files
+* Expand the merged data with relevant data fields
+  * Export date of the thesis (export folder date)
+  * Removal/ Termination date of thesis
 * Import the data into the database by SQL insert statements
 
 For the extraction of data from the HTML-Exports complex functions were needed, whereas the CSV files were read into 
@@ -125,6 +129,20 @@ memory by Dataframes (_Pandas_). For the connection and import into the Database
 As a generator person id was needed for inserting the authors and contacts into the thesis database, an own id generator 
 was implemented (see etl/id_generator.py). As an alternative, a database sequence could be used but must be queried 
 before every new person insert.
+
+The expansion of the merged data was necessary to answer the business questions and to comply with the Data Vault Model.
+The _export date_ of the files/ imported data is needed to track changes in the data. The _removal date_ shows when a 
+thesis was removed/hidden and is no more offered. As there is missing data in the daily thesis exports (see Step 1, Note) 
+and the remove that is not given, the _removal date_ of the thesis must be calculated or assumed. As the list of thesis 
+in the daily exports is ordered by creation date, following steps are used for:
+* Compare the thesis list of the daily export with the last daily export (yesterday)
+  * If a thesis is not present anymore: Mark it as "probably deleted"
+  * If a thesis is not present anymore and a thesis with an earlier creation data is still in list: Set the removal date!
+  * If a thesis is still present: Do nothing
+  * If thesis is marked as "probably deleted" and is present again (in the existing window): Remove "probably deleted"
+* At the end of the process consider all thesis that are marked with "probably deleted"
+  * If the thesis is in the missing data "window" (created date in missing window): Maintain "probably deleted"
+
 
 For further information see the commented source code under *etl/consolidate.py*. 
 
@@ -146,5 +164,5 @@ _SETUP.md (Configuring and using Metabase)_.
 
 After further configuration of Metabase the thesis data can be used for answering business questions and evaluating KPIs.
 
-**As this is a public project and the data set contains personal information, the creation of queries/ KPIs, visualizations 
-and dashboards is documented in the separate (private) file `PO2_Sebastian_Krupke.docx`!**
+**As this is a public project and the data set contains Personally Identifiable Information (PII), the creation of 
+queries/ KPIs, visualizations and dashboards is documented in the separate (private) file `PO2_Sebastian_Krupke.docx`!**
