@@ -4,10 +4,10 @@ This manual describes all requirements and steps to prepare and execute this BI 
 
 ## Requirements/ Prerequisites
 Following requirements are needed for the project:
-* Unix System Environment (Linux/ MacOS)
-* [Python3 installed](https://www.python.org/)
+* Unix System Environment (Linux / macOS)
+* [Python3.10 or higher installed](https://www.python.org/)
 * Pip installed
-* Docker and Docker Compose installed (for later PostgreSQL and Metabase installation)
+* Docker and Docker Compose installed (for PostgreSQL and Metabase installation)
 
 ## Preparing the Data Set
 The data set must be downloaded from https://cloudstorage.elearning.uni-oldenburg.de/s/XXXXXXXXXXXX. After that the data 

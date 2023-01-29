@@ -1,7 +1,8 @@
 # BI Mini-Project P02
 
 ## Introduction
-BI Mini Project that was developed at the University of Oldenburg. The project is based on a dataset of thesis topics offered at the university in Stud.IP.
+BI Mini Project that was developed at the University of Oldenburg. The project is based on a dataset of thesis topics 
+offered at the university in Stud.IP.
 
 This document is a detailed technical report about implementation. For setting up the project see _SETUP.md_.
 
@@ -97,9 +98,9 @@ The next step is to define the Database Schema and to install and configure the 
 First, the Database Schema is derived from the Data Vault Model in Step 2. It already contains the needed data types as well as the relations between Hubs, Links and Satellites (the tables). So there is already logical information about the data. 
 The Database Schema is created via the Data Definition Language SQL. As this project uses PostgreSQL as DBMS, the SQL Dialect for PostgreSQL must be considered. 
 
-The resulting SQL script for the creation of the schema is placed under *infrastructure/database*. As a first step, only the Primary Keys (PK) were added as constraints.
-Furthermore, the SQL script contains the creation of the thesis database with a user and permission, as 
-well as the database creation for the Metabase application (see Step 5).
+The resulting SQL script for the creation of the schema is placed under *infrastructure/database*. As a first step, 
+only the Primary Keys (PK) were added as constraints. Furthermore, the SQL script contains the creation of the thesis 
+database with a user and permission, as well as the database creation for the Metabase application (see Step 5).
 
 The PostgreSQL Database is automatically created and configured by Docker via Docker Compose 
 (see _infrastructure/docker-compose.yml_). The PostgreSQL Database Service is configured with a Docker volume in order to
