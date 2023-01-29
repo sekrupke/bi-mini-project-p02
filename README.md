@@ -128,7 +128,6 @@ for ETL processes. The script does the following steps for _each_ export folder 
   * Export date of the thesis (export folder date)
   * Removed date of thesis
 * Check if all data frames contain same number of rows
-* Removing duplicates in the resulting Dataframe
 
 For the extraction of data from the HTML-Exports Python functions were implemented, whereas the CSV files were read into 
 memory by Dataframes (_Pandas_). The expansion of the merged data was necessary to answer the business questions and to comply with the Data Vault Model.
@@ -145,9 +144,7 @@ thesis exports (see Step 1, Note) and the removal date of thesis is not given, i
 date the thesis was exported
 
 After important and transforming all thesis data, the consistency of the merged Dataframe is checked by comparing 
-the number of rows to all other Dataframes. As a last step, all duplicated rows in the merged Dataframe are removed by 
-checking for duplicates on all columns except _export date_. This yields a duplicate free merged Dataframe for import 
-inti the database.
+the number of rows to all other Dataframes.
 
 ### Import
 Next step of the ETL-Process is the import of the transformed thesis data in the database. For the database connection 
@@ -158,7 +155,7 @@ For every row (thesis), all data fields are extracted and used to create the _In
 The _Insert_ statements are implemented considering the Data Vault Model with calculation of hash values for business 
 keys and calculation of _hash_diff_ on descriptive columns. In order to avoid duplicate database imports in Hubs, 
 Satellites and Links a Set "cache" with already inserted md5 hash values is held. When a md5 hash value is already 
-present in the Set "cache", no insert statement in the table is executed. The md5 hash calculation is done by two 
+present in the Set "cache", no insert statement in the table is executed. The md5 hash calculation is done via two 
 helper functions. The following code shows an example for a Link table, the variables are named similar to the Data 
 Vault Model (_see Table lnk_detail_author_):
 ```python
