@@ -27,6 +27,8 @@ Another issue in the dataset is missing files in the export from 2022-09-08. In 
 several files (like db-topics.csv) are missing. Therefore, we must the export from that day:\
 `rm -r data-uol-thesis-topics/20220908_2b64/`
 
+Note that this removed folder is later on considered in the ETL-Process when calculating removal dates of thesis.
+
 ## Installing PostgreSQL and Metabase
 The PostgreSQL Database is required for the import of the thesis data and for the Metabase application. Metabase is 
 needed for data visualisation and creation of dashboards. 
@@ -69,7 +71,7 @@ accessible by opening the Endpoint given by Docker/ Docker Console, it should be
 First step is to run the initial configuration with the wizard, after clicking "Let's Go" on the welcome screen:
 ![Metabase User Config](images/metabase_user_config.png)
 
-Choose language (1) and insert contact data (2). After that we connect our thesis database to Metabase (3):
+Choose language (1) and insert contact data (2). After that we connect our thesis database to Metabase (3) with the _thesis_user_ (see database/create.sql):
 ![Metabase Database Config](images/metabase_database_config.png)
 
 The wizard step (4) for usage data preferences is optional and can be disabled. After clicking "Finish" we can directly

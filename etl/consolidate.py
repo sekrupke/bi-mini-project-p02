@@ -121,13 +121,33 @@ def md5_columns(*columns):
 
 
 def generate_person_id():
+    # Generate new person id
     return str(PersonId().id)
 
 
-def determine_removal_date(thesis_df):
-    return thesis_df
+def transform_removal_date(date, latest_export_date):
+    # Return the date when it does not match latest_export_date, else None (no date)
+    if date != latest_export_date:
+        return date
+    else:
+        return None
 
-# No calculation of removal date when no data from yesterday is present
+
+def add_removal_date(thesis_df):
+    # Calculate the latest export date (overall max export date over all thesis data)
+    latest_date = thesis_df['export_date'].max()
+
+    # Group all thesis by title and find the highest (latest) export date for each grouped thesis
+    thesis_date_df = thesis_df.groupby('title', as_index=False)['export_date'].max()
+
+    # Use the latest export date of a thesis as removal date when it is not the overall max export date
+    thesis_date_df['removed'] = thesis_date_df['export_date'].apply(lambda d: transform_removal_date(d, latest_date))
+
+    # Merge the thesis_df with the determined removed date from the thesis_date_df, before drop column "export_date"
+    thesis_date_df.drop('export_date', axis=1, inplace=True)
+    thesis_df = pd.merge(thesis_df, thesis_date_df, how='inner', on='title')
+
+    return thesis_df
 
 
 def insert_into_db(sql_command, *parameters):
@@ -136,12 +156,12 @@ def insert_into_db(sql_command, *parameters):
         # Connect to the PostgreSQL database
         conn = psycopg2.connect(host=LOCALHOST, port=PORT, database=DATABASE, user=USER, password=PASSWORD)
 
-        # create a cursor
+        # Create a cursor
         cursor = conn.cursor()
         cursor.execute(sql_command, *parameters)
         conn.commit()
 
-        # close the communication with the PostgreSQL
+        # Close the communication with PostgreSQL database
         cursor.close()
     except (Exception, psycopg2.DatabaseError) as error:
         print("Error accessing database: {}".format(error))
@@ -174,6 +194,7 @@ def load_data_into_db(thesis_df):
         thesis_requirement = str(thesis.requirement)
         thesis_departements = str(thesis.departements).split('|')
         thesis_courses = str(thesis.assigned_courses).split('|')
+        thesis_removed = thesis.removed
         load_date = str(thesis.export_date)
 
         # Insert the thesis (hub_thesis)
@@ -185,9 +206,9 @@ def load_data_into_db(thesis_df):
         # Insert the thesis satellite (sat_thesis)
         hash_diff = md5_columns(thesis_type, thesis_work_type, thesis_status, thesis_created, thesis_id)
         if hash_diff not in sat_thesis_cache:
-            insert_into_db("INSERT INTO sat_thesis VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);",
+            insert_into_db("INSERT INTO sat_thesis VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);",
                            (md5(thesis_title), load_date, hash_diff, 'DigiDigger', thesis_type, thesis_work_type,
-                            thesis_status, thesis_created, thesis_id))
+                            thesis_status, thesis_created, thesis_removed, thesis_id))
             sat_thesis_cache.add(hash_diff)
 
         # Insert the thesis detail (hub_detail)
@@ -311,8 +332,8 @@ def load_data_into_db(thesis_df):
 
         # Calculate the progress of database import
         imported_thesis += 1
-        if imported_thesis == 1 or imported_thesis == number_of_thesis or imported_thesis % 20 == 0:
-            import_progress = round((imported_thesis / number_of_thesis) * 100, 2)
+        if imported_thesis == number_of_thesis or imported_thesis % 1000 == 0:
+            import_progress = round((imported_thesis / number_of_thesis) * 100)
             print('Database import progress: {}%'.format(import_progress))
 
 
@@ -339,7 +360,11 @@ transformed_thesis_df = None
 # Iterate over every export folder in the data set directory
 for export_dir in export_dir_set:
 
-    print('Processing export folder: {}'.format(export_dir))
+    # Calculate the progress of Extraction and Transformation process
+    progress = round((number_of_finished_dirs / number_of_dirs) * 100)
+    print('Processing export folder: {} -> Progress: {}%'.format(export_dir, progress))
+
+    # Build export file paths
     db_topics_path = "/".join([data_set_path, export_dir, db_topics_filename])
     db_topics_detail_path = "/".join([data_set_path, export_dir, db_topics_add_filename])
 
@@ -442,35 +467,29 @@ for export_dir in export_dir_set:
         print("Error: Number of topics in consolidation Dataframes differ!")
         sys.exit()
 
-    # Append the merged Dataframe for the export folder to resulting Dataframe
+    # Append the merged Dataframe for this export folder to the Dataframe with all exports
     if transformed_thesis_df is not None:
         transformed_thesis_df = pd.concat([transformed_thesis_df, merged_df], ignore_index=True)
     else:
         # The first daily export can be assigned directly
         transformed_thesis_df = merged_df
 
-    # Calculate the progress of Extraction and Transformation process
+    # Increase counter for progress
     number_of_finished_dirs += 1
-    progress = round((number_of_finished_dirs / number_of_dirs) * 100, 2)
-    print('Finished. Progress: {}%'.format(progress))
 
-# With the whole transformed thesis Dataframe a duplication check is possible (drop all full duplicates)
-# The export_date must be ignored because two thesis only differ in export_date are the same from business perspektive
-relevant_columns = transformed_thesis_df.columns.difference(['export_date'])
-print("Total number of thesis entries imported: {}".format(len(transformed_thesis_df)))
-transformed_thesis_df.drop_duplicates(subset=relevant_columns, inplace=True, keep='last')
-print("Cleaned (unique) number of thesis entries imported: {}".format(len(transformed_thesis_df)))
-# Write transformed Dataframe with thesis data to CSV file for testing purposes
-transformed_thesis_df.to_csv('transformed_thesis_df.csv', mode='a', index=False, encoding='utf-8', sep=';')
+print("Processing of {} export folders finished.".format(number_of_finished_dirs))
 
-# Determine the removal date of the thesis (when possible due to missing export data, see README.md, Step 4).
-print("Trying to determine removal date of thesis...")
-transformed_thesis_df = determine_removal_date(transformed_thesis_df)
+# Add the removal date of the thesis (when possible due to missing export data, see README.md Step 1).
+print("Trying to determine removal date of thesis data...")
+transformed_thesis_df = add_removal_date(transformed_thesis_df)
+print("Finished to determine removal date of thesis data.")
+
+# KPIs for the ETL process (see README.md, Step 5)
+print("Total number of thesis entries imported: {}.".format(len(transformed_thesis_df)))
 print("Finished the import and transformation of the data set ({}).".format(data_set_path))
 
+# Import merged thesis data in the database
 print("Starting with the database import of the transformed thesis data.")
-
-# Write merged thesis data in the database
-# load_data_into_db(transformed_thesis_df)
+load_data_into_db(transformed_thesis_df)
 
 print("Finished the the database import of the transformed thesis data. Exiting script.")

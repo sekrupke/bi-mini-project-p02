@@ -125,6 +125,7 @@ CREATE TABLE SAT_THESIS (
     TYPE_OF_WORK varchar(100),
     STATUS varchar(25),
     CREATED date,
+    REMOVED date,
     TOPIC_ID char(32),
     PRIMARY KEY (SAT_THESIS_KEY, SAT_LOAD_DTS)
 );
