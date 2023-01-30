@@ -71,16 +71,19 @@ Now we need to create a Metabase user and the thesis database connection by open
 accessible by opening the Endpoint given by Docker/ Docker Console, it should be: http://0.0.0.0:3000/
 
 First step is to run the initial configuration with the wizard, after clicking "Let's Go" on the welcome screen:
+
 ![Metabase User Config](images/metabase_user_config.png)
 
 Choose language (1) and insert contact data (2). After that we connect our thesis database to Metabase (3) with the 
 _thesis_user_ (see database/create.sql):
+
 ![Metabase Database Config](images/metabase_database_config.png)
 
 The wizard step (4) for usage data preferences is optional and can be disabled. After clicking "Finish" we can directly
 go to Metabase by "Take me to Metabase".
 
 Now Metabase is ready to use. For instance, we can directly use automatic explorations from the Home Screen of Metabase:
+
 ![Metabase Explorations](images/metabase_explorations.png)
 
 With this, the setup of the project and infrastructure is complete.
