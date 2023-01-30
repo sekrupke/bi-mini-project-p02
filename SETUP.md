@@ -32,11 +32,13 @@ Note that this removed folder is later on considered in the ETL-Process when cal
 ## Installing PostgreSQL and Metabase
 The PostgreSQL Database is required for the import of the thesis data and for the Metabase application. Metabase is 
 needed for data visualisation and creation of dashboards. 
-As the infrastructure is automated by Docker and Docker Compose, we just need to run the file _docker-compose.yml_ to install PostgreSQL and Metabase:\
+As the infrastructure is automated by Docker and Docker Compose, we just need to run the file _docker-compose.yml_ 
+to install PostgreSQL and Metabase:\
 `cd infrastructure`\
 `docker-compose up`
 
-The creation of the databases "thesis" and "metabase" with tables, users etc. is fully automated as the SQL-script (database/create.sql) is copied into "docker-entrypoint-initdb.d" and executed automatically.
+The creation of the databases "thesis" and "metabase" with tables, users etc. is fully automated as the SQL-script 
+(database/create.sql) is copied into "docker-entrypoint-initdb.d" and executed automatically.
 
 `Note: For further steps it is assumed that the Docker containers are running.`
 
@@ -63,7 +65,7 @@ Start the Python script for extract and transform steps (in virtual environment)
 `python3 consolidate.py`
 
 ## Configuring and using Metabase
-The installation and basic configuration was already done by Docker Compose.
+The installation and basic configuration is already done by Docker Compose.
 
 Now we need to create a Metabase user and the thesis database connection by opening the Metabase UI. Metabase is 
 accessible by opening the Endpoint given by Docker/ Docker Console, it should be: http://0.0.0.0:3000/
@@ -71,7 +73,8 @@ accessible by opening the Endpoint given by Docker/ Docker Console, it should be
 First step is to run the initial configuration with the wizard, after clicking "Let's Go" on the welcome screen:
 ![Metabase User Config](images/metabase_user_config.png)
 
-Choose language (1) and insert contact data (2). After that we connect our thesis database to Metabase (3) with the _thesis_user_ (see database/create.sql):
+Choose language (1) and insert contact data (2). After that we connect our thesis database to Metabase (3) with the 
+_thesis_user_ (see database/create.sql):
 ![Metabase Database Config](images/metabase_database_config.png)
 
 The wizard step (4) for usage data preferences is optional and can be disabled. After clicking "Finish" we can directly
