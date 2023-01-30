@@ -217,10 +217,9 @@ in the SETUP.md (Creating Python Environment).
 The last step after importing the thesis data into the database is the querying, visualization and the evaluation of 
 KPIs. With the visualization and KPIs the business questions can be answered.
 
-To ensure the success of the ETL process and the import of thesis data before starting with visualizations, detailed 
-logging and a progress indicator are implemented in the Python Script, as shown in the following excerpt. 
-For instance, the logging shows that all export folders contained about 78,000 thesis entries and 751 unique thesis 
-entries (including changes):
+To ensure the success of the ETL process and the import of thesis data, detailed logging and a progress indicator are 
+implemented in the Python Script, as shown in the following excerpt. Also, the custom KPI 
+"number of extracted thesis entries" is shown in the log (about 78,000 thesis entries):
 ```
 .........
 Processing export folder: 20221124_2300 -> Progress: 100%
@@ -234,10 +233,12 @@ Database import progress: 1%
 .........
 ```
 The ~78,000 thesis are resulting from daily exports between 2021-07-19 - 2022-11-24, which are 493 days. As every day 
-has about 150 exported thesis entries (2 - 4 thesis list pages à 50 thesis), we can calculate the expected thesis entries:\
+has about 150 exported thesis entries (2 - 4 thesis list pages à 50 thesis), the number of expected thesis entries is:\
 `493 days * 150 thesis/day = 73,950 thesis`\
 Comparing ~78,000 actual thesis entries with the 73,950 expected thesis entries shows a plausible import process.
-Querying the database after import shows that only a small fraction of these entries are unique thesis entries.
+Another KPI for checking the import process is the "number of unique thesis". Querying the database after database import 
+shows that only 440 unique thesis entries exist. This is expected because the last thesis list export (HTML-Export) contains 
+about 6 pages (~300 thesis) and some thesis were removed.
 
 The visualizations and dashboards are created in Metabase. Metabase uses the supplied PostgreSQL database for saving 
 internal data like Dashboards (see Step 3). Metabase is automatically installed and configured by Docker via Docker Compose
