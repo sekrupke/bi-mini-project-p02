@@ -97,6 +97,8 @@ def split_degree_programmes(degree_programmes):
     programmes = programmes.replace("Master", "|Master")
     programmes = programmes.replace("Zwei-Fächer", "|Zwei-Fächer")
     programmes = programmes.replace("Staatsexamen", "|Staatsexamen")
+    programmes = programmes.replace("Betriebswirtschaftslehre (berufsbegleitend)",
+                                    "|Betriebswirtschaftslehre (berufsbegleitend)")
     programmes = programmes.removeprefix("|")
     return programmes
 
