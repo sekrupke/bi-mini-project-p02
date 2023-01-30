@@ -15,23 +15,6 @@ DATABASE = "thesis"
 USER = "thesis_user"
 PASSWORD = "aB2Ck91mN0LeA"
 
-# Use sets for md5 hash values of already inserted rows in hubs, satellites and links
-hub_title_cache = set()
-hub_detail_cache = set()
-hub_programm_cache = set()
-hub_contact_author_cache = set()
-hub_departement_cache = set()
-hub_course_cache = set()
-sat_thesis_cache = set()
-sat_detail_cache = set()
-sat_person_cache = set()
-lnk_thesis_details_cache = set()
-lnk_thesis_degree_programm_cache = set()
-lnk_thesis_contact_cache = set()
-lnk_detail_author_cache = set()
-lnk_detail_departement_cache = set()
-lnk_detail_course_cache = set()
-
 
 def extract_departements(html_table_rows):
     # Search every html table row for "Abteilungen"
@@ -177,6 +160,26 @@ def load_data_into_db(thesis_df):
     number_of_thesis = len(thesis_df)
     imported_thesis = 0
 
+    # Use sets for md5 hash values of already inserted rows in hubs, satellites and links
+    hub_title_cache = set()
+    hub_detail_cache = set()
+    hub_programm_cache = set()
+    hub_contact_author_cache = set()
+    hub_departement_cache = set()
+    hub_course_cache = set()
+    sat_thesis_cache = set()
+    sat_detail_cache = set()
+    sat_person_cache = set()
+    lnk_thesis_details_cache = set()
+    lnk_thesis_degree_programm_cache = set()
+    lnk_thesis_contact_cache = set()
+    lnk_detail_author_cache = set()
+    lnk_detail_departement_cache = set()
+    lnk_detail_course_cache = set()
+
+    # Dictionary for storing the generated person_id for contact names/ author names
+    person_id_dict = dict()
+
     for thesis in thesis_df.itertuples(index=False):
 
         # Read all needed values from the Dataframe
@@ -244,13 +247,13 @@ def load_data_into_db(thesis_df):
                 hub_programm_cache.add(md5(thesis_programm))
 
             # Insert the thesis degree programm link (lnk_thesis_degree_programm)
-            detail_course_key = md5_columns(thesis_title, thesis_programm)
-            if detail_course_key not in lnk_detail_course_cache:
+            thesis_degree_key = md5_columns(thesis_title, thesis_programm)
+            if thesis_degree_key not in lnk_thesis_degree_programm_cache:
                 hub_thesis_key = md5(thesis_title)
                 hub_degree_key = md5(thesis_programm)
                 insert_into_db("INSERT INTO lnk_thesis_degree_programm VALUES (%s, %s, %s, %s, %s);",
-                               (detail_course_key, hub_thesis_key, hub_degree_key, load_date, 'DigiDigger'))
-                lnk_detail_course_cache.add(detail_course_key)
+                               (thesis_degree_key, hub_thesis_key, hub_degree_key, load_date, 'DigiDigger'))
+                lnk_thesis_degree_programm_cache.add(thesis_degree_key)
 
         # Insert the contact persons (hub_person)
         for thesis_contact in thesis_contacts:
@@ -260,6 +263,7 @@ def load_data_into_db(thesis_df):
                 insert_into_db("INSERT INTO hub_person VALUES (%s, %s, %s, %s);",
                                (md5(thesis_person_id), thesis_person_id, load_date, 'DigiDigger'))
                 hub_contact_author_cache.add(md5(thesis_contact))
+                person_id_dict[thesis_contact] = thesis_person_id
 
                 # Insert the person satellite (sat_person) for contacts
                 hash_diff = md5(thesis_contact)
@@ -268,14 +272,16 @@ def load_data_into_db(thesis_df):
                                    (md5(thesis_person_id), load_date, hash_diff, 'DigiDigger', thesis_contact))
                     sat_person_cache.add(hash_diff)
 
-                # Insert the thesis contact link (lnk_thesis_contact)
-                thesis_contact_key = md5_columns(thesis_title, thesis_person_id)
-                if thesis_contact_key not in lnk_thesis_contact_cache:
-                    hub_thesis_key = md5(thesis_title)
-                    hub_person_key = md5(thesis_person_id)
-                    insert_into_db("INSERT INTO lnk_thesis_contact VALUES (%s, %s, %s, %s, %s);",
-                                   (thesis_contact_key, hub_thesis_key, hub_person_key, load_date, 'DigiDigger'))
-                    lnk_thesis_contact_cache.add(thesis_contact_key)
+            # Insert the thesis contact link (lnk_thesis_contact)
+            # Before get the person_id of the contact as it was generated before
+            thesis_person_id = person_id_dict[thesis_contact]
+            thesis_contact_key = md5_columns(thesis_title, thesis_person_id)
+            if thesis_contact_key not in lnk_thesis_contact_cache:
+                hub_thesis_key = md5(thesis_title)
+                hub_person_key = md5(thesis_person_id)
+                insert_into_db("INSERT INTO lnk_thesis_contact VALUES (%s, %s, %s, %s, %s);",
+                               (thesis_contact_key, hub_thesis_key, hub_person_key, load_date, 'DigiDigger'))
+                lnk_thesis_contact_cache.add(thesis_contact_key)
 
         # Insert the author (hub_person)
         if md5(thesis_author) not in hub_contact_author_cache:
@@ -283,6 +289,7 @@ def load_data_into_db(thesis_df):
             insert_into_db("INSERT INTO hub_person VALUES (%s, %s, %s, %s);",
                            (md5(author_person_id), author_person_id, load_date, 'DigiDigger'))
             hub_contact_author_cache.add(md5(thesis_author))
+            person_id_dict[thesis_author] = author_person_id
 
             # Insert the person satellite (sat_person) for author
             hash_diff = md5(thesis_author)
@@ -291,14 +298,16 @@ def load_data_into_db(thesis_df):
                                (md5(author_person_id), load_date, hash_diff, 'DigiDigger', thesis_author))
                 sat_person_cache.add(hash_diff)
 
-            # Insert the detail author link (lnk_detail_author)
-            detail_author_key = md5_columns(thesis_id, author_person_id)
-            if detail_author_key not in lnk_detail_author_cache:
-                hub_details_key = md5(thesis_id)
-                hub_person_key = md5(author_person_id)
-                insert_into_db("INSERT INTO lnk_detail_author VALUES (%s, %s, %s, %s, %s);",
-                               (detail_author_key, hub_details_key, hub_person_key, load_date, 'DigiDigger'))
-                lnk_detail_author_cache.add(detail_author_key)
+        # Insert the detail author link (lnk_detail_author)
+        # Before get the person_id of the author as it was generated before
+        author_person_id = person_id_dict[thesis_author]
+        detail_author_key = md5_columns(thesis_id, author_person_id)
+        if detail_author_key not in lnk_detail_author_cache:
+            hub_details_key = md5(thesis_id)
+            hub_person_key = md5(author_person_id)
+            insert_into_db("INSERT INTO lnk_detail_author VALUES (%s, %s, %s, %s, %s);",
+                           (detail_author_key, hub_details_key, hub_person_key, load_date, 'DigiDigger'))
+            lnk_detail_author_cache.add(detail_author_key)
 
         # Insert the departements (hub_departement)
         for thesis_departement in thesis_departements:
@@ -324,13 +333,13 @@ def load_data_into_db(thesis_df):
                 hub_course_cache.add(md5(thesis_course))
 
             # Insert the detail course link (lnk_detail_course)
-            detail_course_key = md5_columns(thesis_id, thesis_course)
-            if detail_course_key not in lnk_detail_course_cache:
+            thesis_degree_key = md5_columns(thesis_id, thesis_course)
+            if thesis_degree_key not in lnk_detail_course_cache:
                 hub_details_key = md5(thesis_id)
                 hub_course_key = md5(thesis_course)
                 insert_into_db("INSERT INTO lnk_detail_course VALUES (%s, %s, %s, %s, %s);",
-                               (detail_course_key, hub_details_key, hub_course_key, load_date, 'DigiDigger'))
-                lnk_detail_course_cache.add(detail_course_key)
+                               (thesis_degree_key, hub_details_key, hub_course_key, load_date, 'DigiDigger'))
+                lnk_detail_course_cache.add(thesis_degree_key)
 
         # Calculate the progress of database import
         imported_thesis += 1

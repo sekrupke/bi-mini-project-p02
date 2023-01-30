@@ -202,8 +202,9 @@ if detail_author_key not in lnk_detail_author_cache:
 ```
 
 As a generated person id is needed for inserting the authors and contacts into the thesis database, an own id 
-generator is used (see etl/id_generator.py). As an alternative, a database sequence could be used but must 
-be queried before every new person insert.
+generator is used (see etl/id_generator.py). The generated person ids are stored in a dictionary accessible by the 
+name of the author/ contact for later use in other _Import_ statements. As an alternative, a database sequence could be 
+used but the database must be queried before every insert of new persons.
 
 For further information and documentary of the ETL process see the commented source code under *etl/consolidate.py*. 
 To track progress and outcome of the ETL-process, logging is implemented and a report of the progress is given when 
