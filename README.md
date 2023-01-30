@@ -20,16 +20,22 @@ The process model (steps) of this project is based on classic Business Intellige
 * _Step 5_: Visualization and KPIs (Project Tasks)
 
 ## Step 1: Review of the Data Set
-The dataset includes daily HTML-Export of all thesis topics with additional data (thesis topic details). There is also a 
-CSV and JSON Representation of the thesis topics and thesis topic details in the dataset. As the data is exported from 
+The dataset includes daily HTML-Exports of all thesis topics with additional data (thesis topic details). There is also a 
+CSV and JSON representation of the thesis topics list and thesis topic details in the dataset. As the data is exported from 
 the Stud.IP-Thesis Plugin which implements a pagination, there are multiple HTML-Exports per day. Also every detail 
 page (when following the link on the thesis list) is present in the data set via a single HTML-Export.
 
 This figure shows the structure of the data set (number of files in /additional reduced for illustration):
 ![Thesis topics data description](presentation/thesis_topics_data.png)
 
-`Note: The HTML-Export in the data set only contains the first three pages and the last page of the thesis topic list. 
-This unintentionally missing data is considered by best effort (see Step 4: ETL) but may result in inconsistent results later on!`
+**Note: The HTML-Export in the data set only contains the first three pages and the last page of the thesis topic list. 
+This unintentionally missing data is considered by best effort (see Step 4: ETL) but may result in inconsistent results 
+later on!**
+
+The first and second HTML-Export file contain the same thesis data and only differ in language (see Table Header). 
+As only the first page is exported in English, the German data field values are used for the following steps. The names 
+of the data fields (columns) itself will be in English language to be consistent in the ETL process and avoid naming 
+issues.
 
 The first step is to analyze the given data and data fields across the files in the data set. Analyzing the HTML Exports 
 and CSV/JSON-files yields to a list of all available data fields, with some internal fields only given in the CSV/JSON-files 
