@@ -148,8 +148,14 @@ def insert_into_db(sql_command, *parameters):
 
         # Close the communication with PostgreSQL database
         cursor.close()
-    except (Exception, psycopg2.DatabaseError) as error:
-        print("Error accessing database: {}".format(error))
+    except psycopg2.DatabaseError as error:
+        # Special exception handling for duplicate key entries
+        if error.pgcode == '23505':
+            print("Warning: Duplicate key value, consider checking dataset: {}".format(error))
+        else:
+            print("Error accessing PostgreSQL database: {}".format(error))
+    except Exception as error:
+        print("Error inserting data in the database: {}".format(error))
     finally:
         if conn is not None:
             conn.close()

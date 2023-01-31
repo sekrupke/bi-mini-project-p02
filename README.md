@@ -13,20 +13,20 @@ The business questions and mandatory KPIs are listed in a separate task document
 
 The process model (steps) of this project is based on classic Business Intelligence projects. Therefore it is divided in 
 5 major milestones which are described in detail in this document:
-* _Step 1_: Review of the Data Set
+* _Step 1_: Review of the Data Set (Data Understanding)
 * _Step 2_: Data Vault Model
 * _Step 3_: Database Schema and Database
 * _Step 4_: ETL-Process
 * _Step 5_: Visualization and KPIs (Project Tasks)
 
-## Step 1: Review of the Data Set
+## Step 1: Review of the Data Set (Data Understanding)
 The dataset includes daily HTML-Exports of all thesis topics with additional data (thesis topic details). There is also a 
 CSV and JSON representation of the thesis topics list and thesis topic details in the dataset. As the data is exported from 
 the Stud.IP-Thesis Plugin which implements a pagination, there are multiple HTML-Exports per day. Also every detail 
 page (when following the link on the thesis list) is present in the data set via a single HTML-Export.
 
 This figure shows the structure of the data set (number of files in /additional reduced for illustration):
-![Thesis topics data description](presentation/thesis_topics_data.png)
+![Thesis topics data description](images/thesis_topics_data.png)
 
 **Note: The HTML-Export in the data set only contains the first three pages and the last page of the thesis topic list. 
 This unintentionally missing data is considered by best effort (see Step 4: ETL) but may result in inconsistent results 
