@@ -11,8 +11,8 @@ Following requirements are needed for the project:
 
 ## Preparing the Data Set
 The data set must be downloaded from https://cloudstorage.elearning.uni-oldenburg.de/s/XXXXXXXXXXXX. After that the data 
-set can be unzipped and the folder "data-uol-thesis-topics" must be placed in the **root folder** of this project. This is 
-the folder directly containing the daily thesis exports.
+set can be unzipped and the inner folder "data-uol-thesis-topics" must be placed in the **root folder** of this project. 
+This is the folder directly containing the daily thesis exports.
 
 `Note: The files (names) and structure of the data set must not change.`
 
