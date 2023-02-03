@@ -252,4 +252,4 @@ _SETUP.md (Configuring and using Metabase)_.
 After further configuration of Metabase the thesis data can be used for answering business questions and evaluating KPIs.
 
 **As this is a public project and the data set contains Personally Identifiable Information (PII), the creation of 
-queries/ KPIs, visualizations and dashboards is documented in the separate (private) file `PO2_Sebastian_Krupke.docx`!**
+queries/ KPIs, visualizations and dashboards is documented in the separate (private) file `PO2_Sebastian_Krupke.pdf`!**
